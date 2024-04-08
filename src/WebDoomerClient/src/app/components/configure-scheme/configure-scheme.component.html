@@ -1,0 +1,148 @@
+<!-- Modal content -->
+<div class="default-text-color relative rounded-lg bg-white shadow dark:bg-gray-700">
+    <!-- Modal header -->
+    <div class="flex rounded-t border-b p-4 dark:border-gray-600">
+        <h1 class="default-text-color-highlight grow text-xl font-semibold">Settings</h1>
+        <button (click)="close()" type="button" class="button flex w-8 justify-center text-gray-900 dark:text-white">
+            <svg class="h-3 w-3 self-center" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+            </svg>
+            <span class="sr-only">Close modal</span>
+        </button>
+    </div>
+
+    <!-- Modal body -->
+    <div class="space-y-6 p-6">
+        <form *ngIf="formGroup" [formGroup]="formGroup" (ngSubmit)="onFormSubmit()" class="flex flex-col gap-2">
+            <!-- Zandronum executable -->
+            <div class="group relative z-0 w-full">
+                <input
+                    id="form-zandronum-exe"
+                    formControlName="zandronumLocation"
+                    class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
+                    [ngClass]="{ 'border-red-600 dark:border-red-700': zandronumLocationControl.touched && zandronumLocationErrors }"
+                    placeholder=""
+                />
+                <label
+                    for="form-zandronum-exe"
+                    class="absolute top-3 -z-10 line-clamp-1 origin-[0] -translate-y-6 scale-75 transform text-sm text-gray-500 transition-transform duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:start-0 peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:font-medium peer-focus:text-blue-600 dark:text-gray-400 peer-focus:dark:text-blue-500 rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4"
+                >
+                    Zandronum executable
+                </label>
+
+                @if (!zandronumLocationControl.touched) {
+                    <span class="mt-1 line-clamp-2 text-xs text-gray-700/90 dark:text-gray-100/50">
+                        Enter the location of your Zandronum executable (example: 'C:/Doom/Zandronum/Zandronum.exe').
+                    </span>
+                } @else if (!zandronumLocationExecutablePathError) {
+                    <span class="mt-1 line-clamp-2 text-xs text-red-600 dark:text-red-500">Please input a valid path to an executable.</span>
+                }
+            </div>
+
+            <!-- QZandronum executable -->
+            <div class="group relative z-0 w-full">
+                <input
+                    id="form-qzandronum-exe"
+                    formControlName="qZandronumLocation"
+                    class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
+                    [ngClass]="{ 'border-red-600 dark:border-red-700': qZandronumLocationControl.touched && qZandronumLocationErrors }"
+                    placeholder=""
+                />
+                <label
+                    for="form-qzandronum-exe"
+                    class="absolute top-3 -z-10 line-clamp-1 origin-[0] -translate-y-6 scale-75 transform text-sm text-gray-500 transition-transform duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:start-0 peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:font-medium peer-focus:text-blue-600 dark:text-gray-400 peer-focus:dark:text-blue-500 rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4"
+                >
+                    QZandronum executable
+                </label>
+
+                @if (!qZandronumLocationControl.touched) {
+                    <span class="mt-1 line-clamp-2 text-xs text-gray-700/90 dark:text-gray-100/50">
+                        Enter the location of your QZandronum executable (example: 'C:/Doom/QZandronum/QZandronum.exe').
+                    </span>
+                } @else if (!qZandronumLocationExecutablePathError) {
+                    <span class="mt-1 line-clamp-2 text-xs text-red-600 dark:text-red-500">Please input a valid path to an executable.</span>
+                }
+            </div>
+
+            <!-- Doomseeker executable -->
+            <div class="group relative z-0 w-full">
+                <input
+                    id="form-doomseeker-exe"
+                    formControlName="doomseekerLocation"
+                    class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
+                    [ngClass]="{ 'border-red-600 dark:border-red-700': doomseekerLocationControl.touched && doomseekerLocationErrors }"
+                    placeholder=""
+                />
+                <label
+                    for="form-doomseeker-exe"
+                    class="absolute top-3 -z-10 line-clamp-1 origin-[0] -translate-y-6 scale-75 transform text-sm text-gray-500 transition-transform duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:start-0 peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:font-medium peer-focus:text-blue-600 dark:text-gray-400 peer-focus:dark:text-blue-500 rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4"
+                >
+                    Doomseeker executable
+                </label>
+
+                @if (!doomseekerLocationControl.touched) {
+                    <span class="mt-1 line-clamp-2 text-xs text-gray-700/90 dark:text-gray-100/50">
+                        Enter the location of your Doomseeker executable (example: 'C:/Doom/Doomseeker/Doomseeker.exe').
+                    </span>
+                } @else if (!doomseekerLocationExecutablePathError) {
+                    <span class="mt-1 line-clamp-2 text-xs text-red-600 dark:text-red-500">Please input a valid path to an executable.</span>
+                }
+            </div>
+
+            <!-- PWads directory -->
+            <div class="group relative z-0 w-full">
+                <input
+                    id="form-pwads-directory"
+                    formControlName="pwadsLocation"
+                    class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
+                    [ngClass]="{ 'border-red-600 dark:border-red-700': pwadsLocationControl.touched && pwadsLocationErrors }"
+                    placeholder=""
+                />
+                <label
+                    for="form-pwads-directory"
+                    class="absolute top-3 -z-10 line-clamp-1 origin-[0] -translate-y-6 scale-75 transform text-sm text-gray-500 transition-transform duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:start-0 peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:font-medium peer-focus:text-blue-600 dark:text-gray-400 peer-focus:dark:text-blue-500 rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4"
+                >
+                    PWads directory
+                </label>
+
+                @if (!pwadsLocationControl.touched) {
+                    <span class="mt-1 line-clamp-2 text-xs text-gray-700/90 dark:text-gray-100/50">
+                        Enter the directory of your PWads (example: 'C:/Doom/PWADs/').
+                    </span>
+                } @else if (!pwadsLocationFolderPathError) {
+                    <span class="mt-1 line-clamp-2 text-xs text-red-600 dark:text-red-500">Please input a valid path to a directory.</span>
+                }
+            </div>
+
+            <!-- IWads directory -->
+            <div class="group relative z-0 w-full">
+                <input
+                    id="form-iwads-directory"
+                    formControlName="iwadsLocation"
+                    class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
+                    [ngClass]="{ 'border-red-600 dark:border-red-700': iwadsLocationControl.touched && iwadsLocationErrors }"
+                    placeholder=""
+                />
+                <label
+                    for="form-iwads-directory"
+                    class="absolute top-3 -z-10 line-clamp-1 origin-[0] -translate-y-6 scale-75 transform text-sm text-gray-500 transition-transform duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:start-0 peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:font-medium peer-focus:text-blue-600 dark:text-gray-400 peer-focus:dark:text-blue-500 rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4"
+                >
+                    IWads directory
+                </label>
+
+                @if (!iwadsLocationControl.touched) {
+                    <span class="mt-1 line-clamp-2 text-xs text-gray-700/90 dark:text-gray-100/50">
+                        Enter the directory of your IWads (example: 'C:/Doom/IWADs/').
+                    </span>
+                } @else if (!iwadsLocationFolderPathError) {
+                    <span class="mt-1 line-clamp-2 text-xs text-red-600 dark:text-red-500">Please input a valid path to a directory.</span>
+                }
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button [disabled]="!formGroup.touched" (click)="onFormClear()" type="button" class="button w-24">Clear</button>
+                <button [disabled]="!formGroup.valid" type="submit" class="button w-24">Submit</button>
+            </div>
+        </form>
+    </div>
+</div>

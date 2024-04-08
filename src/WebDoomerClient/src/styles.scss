@@ -1,0 +1,77 @@
+@import 'scrollbar.scss';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    @apply transition-colors;
+}
+
+.default-text-color {
+    @apply text-gray-700 dark:text-gray-400;
+}
+
+.default-text-color-highlight {
+    @apply text-gray-800 dark:text-white;
+}
+
+.button {
+    @apply default-text-color-highlight rounded-lg bg-white p-1 shadow shadow-slate-300 transition-all hover:bg-slate-200 active:scale-90 disabled:opacity-50 disabled:transition-none disabled:hover:bg-white disabled:active:scale-100 dark:bg-gray-800 dark:shadow-slate-800 hover:dark:bg-gray-600 disabled:hover:dark:bg-gray-800;
+
+    &.highlight {
+        @apply bg-gray-100 dark:bg-gray-700;
+    }
+}
+
+.inline-code-block {
+    @apply px-1 text-gray-700 outline outline-1 outline-gray-400 dark:text-gray-300;
+}
+
+.text-info {
+    @apply text-blue-800 dark:text-blue-400;
+}
+
+.bg-info {
+    @apply bg-blue-50 dark:bg-gray-800;
+}
+
+.border-info {
+    @apply border-blue-200 dark:border-blue-700;
+}
+
+.text-danger {
+    @apply text-red-800 dark:text-red-400;
+}
+
+.bg-danger {
+    @apply bg-red-50 dark:bg-gray-800;
+}
+
+.border-danger {
+    @apply border-red-200 dark:border-red-700;
+}
+
+.text-success {
+    @apply text-green-800 dark:text-green-400;
+}
+
+.bg-success {
+    @apply bg-green-50 dark:bg-gray-800;
+}
+
+.border-warning {
+    @apply border-green-200 dark:border-green-700;
+}
+
+.text-warning {
+    @apply text-yellow-800 dark:text-white;
+}
+
+.bg-warning {
+    @apply bg-yellow-100 dark:bg-yellow-600;
+}
+
+.border-warning {
+    @apply border-yellow-200 dark:border-yellow-800;
+}

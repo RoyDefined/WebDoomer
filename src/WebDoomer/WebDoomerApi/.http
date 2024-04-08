@@ -1,0 +1,33 @@
+@hostname=localhost
+@protocol=http
+@port=5000
+@host={{protocol}}://{{hostname}}:{{port}}
+@apiEndpoint={{host}}/api
+
+# Basic ping endpoint
+GET {{apiEndpoint}}/ping
+###
+
+# Get list of servers.
+GET {{apiEndpoint}}/server?skip=5&&take=1000
+###
+
+# Get list of servers, ordered by players, ascending.
+GET {{apiEndpoint}}/server?orderBy=PlayersAscending
+###
+
+# Get list of servers, ordered by players, descending.
+GET {{apiEndpoint}}/server?orderBy=PlayersDescending
+###
+
+# Get list of server ids.
+GET {{apiEndpoint}}/server/ids
+###
+
+# Get list of server ids, ordered by players, ascending.
+GET {{apiEndpoint}}/server/ids?orderBy=PlayersAscending
+###
+
+# Get list of server ids, ordered by players, descending.
+GET {{apiEndpoint}}/server/ids?orderBy=PlayersDescending
+###

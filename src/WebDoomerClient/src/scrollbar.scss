@@ -1,0 +1,37 @@
+::-webkit-scrollbar {
+    @apply h-3 w-3;
+}
+
+::-webkit-scrollbar-corner {
+    @apply bg-white;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply rounded-md bg-gray-400;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+}
+
+.dark {
+    ::-webkit-scrollbar-corner {
+        @apply bg-gray-800;
+    }
+
+    ::-webkit-scrollbar-track {
+        @apply bg-gray-900;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply rounded-md bg-gray-700;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-gray-600;
+    }
+}

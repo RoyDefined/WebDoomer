@@ -1,0 +1,256 @@
+<!-- Modal content -->
+<div class="default-text-color relative rounded-lg bg-white shadow dark:bg-gray-700">
+    <!-- Modal header -->
+    <div class="flex rounded-t border-b p-4 dark:border-gray-600">
+        <h1 class="default-text-color-highlight grow text-xl font-semibold">Joining with a server through Doomseeker with a url scheme</h1>
+        <button (click)="close()" type="button" class="button flex w-8 justify-center text-gray-900 dark:text-white">
+            <svg class="h-3 w-3 self-center" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+            </svg>
+            <span class="sr-only">Close modal</span>
+        </button>
+    </div>
+
+    <!-- Modal body -->
+    <div class="space-y-6 p-6">
+        <p>Installed applications can specify custom URL schemes for themselves and allow other applications to call them using the URL specified.</p>
+        <p>Doomseeker also has this feature, and handles on the <code>zan://</code> scheme. This can be used by WebDoomer to join servers.</p>
+        <p>However, this scheme is not set up by default and because of this you will have to configure it before you can use it.</p>
+        <p>You can configure it automatically using a registery file, or configure it manually.</p>
+        <p class="font-bold">Doomseeker is required! Download this first.</p>
+
+        @if (settings$ | async; as settings) {
+            <!-- User has not configured Doomseeker. -->
+            @if (!settings.doomseekerLocation) {
+                <div class="border-warning text-warning bg-warning rounded-b border-t-4 px-4 py-3 shadow-md" role="alert">
+                    <div>
+                        <p class="font-bold">You have missing configuration</p>
+                        <p class="text-sm">You have not configured your Doomseeker executable location.</p>
+                        <p class="text-sm">Consider configuring this before following the steps.</p>
+                        <p class="text-sm">Not doing so requires manual modification to data in these steps.</p>
+                        <div class="mt-1">
+                            <button (click)="openConfigureScheme()" class="button highlight">Open settings</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+
+        <app-tabs>
+            <app-tab [headerTemplateRef]="headerTemplateRef1" [bodyTemplateRef]="bodyTemplateRef1">
+                <ng-template #headerTemplateRef1>Registery file</ng-template>
+                <ng-template #bodyTemplateRef1>
+                    <div class="py-3">
+                        @if (settings$ | async; as settings) {
+                            <ol class="ml-3 mt-2 flex flex-col gap-1">
+                                @if (vm$ | async; as vm) {
+                                    @if (vm.error) {
+                                        <div class="bg-yellow-200 p-2 text-center font-medium text-yellow-800 dark:bg-yellow-800 dark:text-yellow-400">
+                                            <h1>There was an error fetching the registery file. Try reloading the page.</h1>
+                                        </div>
+                                    }
+                                }
+
+                                <li><span class="pr-2 font-bold">1.</span> Download the registery file using the download button below.</li>
+                                <li><span class="pr-2 font-bold">2.</span> Press the registery file to install the url.</li>
+
+                                @if (vm$ | async; as vm) {
+                                    <div class="mt-1">
+                                        <button [disabled]="vm.loading || vm.error" (click)="downloadString(vm.file!)" class="button highlight">
+                                            Download
+                                        </button>
+                                    </div>
+                                }
+                            </ol>
+                        }
+                    </div>
+                </ng-template>
+            </app-tab>
+            <app-tab [headerTemplateRef]="headerTemplateRef2" [bodyTemplateRef]="bodyTemplateRef2">
+                <ng-template #headerTemplateRef2>Manually</ng-template>
+                <ng-template #bodyTemplateRef2>
+                    <div class="py-3">
+                        @if (settings$ | async; as settings) {
+                            <ol class="ml-3 mt-2 flex flex-col gap-1">
+                                <li>
+                                    <div class="flex gap-2">
+                                        <span class="font-bold">1.</span>
+                                        <span>
+                                            Press
+                                            <code class="inline-code-block">⊞ Win + r</code>.
+                                        </span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="flex gap-2">
+                                        <span class="font-bold">2.</span>
+                                        <span>
+                                            Type
+                                            <code class="inline-code-block">regedit</code> and press ok.
+                                        </span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="flex gap-2">
+                                        <span class="font-bold">3.</span>
+                                        <span>
+                                            Right-click on
+                                            <code class="inline-code-block">HKEY_CLASSES_ROOT</code> and press <code class="inline-code-block">New → Key</code>.
+                                        </span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="flex gap-2">
+                                        <span class="font-bold">4.</span>
+                                        <span> Name the file <code class="inline-code-block">zan</code>. </span>
+                                    </div>
+                                </li>
+                                <li class="flex flex-col gap-2">
+                                    <div class="flex gap-2">
+                                        <span class="font-bold">5.</span>
+                                        <span>
+                                            Continue with creating keys inside
+                                            <code class="inline-code-block">zan</code> like you just did.
+                                            <br />
+                                            You end up with the following hierarchy of keys:
+                                        </span>
+                                    </div>
+
+                                    <code class="block border border-slate-200/20 bg-slate-500/20 p-2">
+                                        <span class="block">HKEY_CLASSES_ROOT</span>
+                                        <div class="ml-7">
+                                            <span class="block">zan</span>
+                                            <div class="ml-7">
+                                                <span class="block">shell</span>
+                                                <div class="ml-7">
+                                                    <span class="block">open</span>
+                                                    <div class="ml-7">
+                                                        <span class="block">command</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </code>
+                                </li>
+
+                                <li class="flex flex-col gap-2">
+                                    <div class="flex gap-2">
+                                        <span class="font-bold">6.</span>
+                                        <span>
+                                            Next you need to assign string values to a few of the keys you created. In order to to this you must open the key
+                                            specified, press right click and from the dropdown pick <code class="inline-code-block">New → String Value</code>.
+                                            Do this and add the following values as marked in green:
+                                        </span>
+                                    </div>
+
+                                    <code class="block border border-slate-200/20 bg-slate-500/20 p-2">
+                                        <span class="block">HKEY_CLASSES_ROOT</span>
+                                        <div class="ml-7 mt-2">
+                                            <span class="block">zan</span>
+                                            <div class="ml-7">
+                                                <span class="flex gap-2">
+                                                    <span class="text-green-500/80">URL Protocol:</span>
+                                                    <span class="text-green-600/80">(leave Data empty)</span>
+                                                </span>
+                                            </div>
+                                            <div class="ml-7 mt-2">
+                                                <span class="block">shell</span>
+                                                <div class="ml-7 mt-2">
+                                                    <span class="block">open</span>
+                                                    <div class="ml-7 mt-2">
+                                                        <span class="block">command</span>
+                                                        <div class="ml-7">
+                                                            <span class="flex gap-2">
+                                                                <span class="text-green-500/80">(Default):</span>
+                                                                <span class="text-green-600/80">
+                                                                    "{{ settings.doomseekerLocation || 'Path/To/Doomseeker.exe' }}" --connect "%1"
+                                                                </span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </code>
+                                </li>
+                            </ol>
+                        }
+                    </div>
+                </ng-template>
+            </app-tab>
+            <app-tab [headerTemplateRef]="headerTemplateRef3" [bodyTemplateRef]="bodyTemplateRef3">
+                <ng-template #headerTemplateRef3>Modify url</ng-template>
+                <ng-template #bodyTemplateRef3>
+                    <p class="my-2 text-center font-bold">
+                        The following steps only apply if you have an existing url scheme installation and wish to change your Doomseeker directory.
+                    </p>
+                    <div class="py-3">
+                        @if (settings$ | async; as settings) {
+                            <ol class="ml-3 mt-2 flex flex-col gap-1">
+                                <li>
+                                    <div class="flex gap-2">
+                                        <span class="font-bold">1.</span>
+                                        <span>
+                                            Press
+                                            <code class="inline-code-block">⊞ Win + r</code>.
+                                        </span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="flex gap-2">
+                                        <span class="font-bold">2.</span>
+                                        <span>
+                                            Type
+                                            <code class="inline-code-block">regedit</code> and press ok.
+                                        </span>
+                                    </div>
+                                </li>
+                                <li class="flex flex-col gap-2">
+                                    <div class="flex gap-2">
+                                        <span class="font-bold">3.</span>
+                                        <span> Open the following keys: </span>
+                                    </div>
+
+                                    <code class="block border border-slate-200/20 bg-slate-500/20 p-2">
+                                        <span class="block">HKEY_CLASSES_ROOT</span>
+                                        <div class="ml-7">
+                                            <span class="block">zan</span>
+                                            <div class="ml-7">
+                                                <span class="block">shell</span>
+                                                <div class="ml-7">
+                                                    <span class="block">open</span>
+                                                    <div class="ml-7">
+                                                        <span class="block">command</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </code>
+                                </li>
+
+                                <li class="flex flex-col gap-2">
+                                    <div class="flex gap-2">
+                                        <span class="font-bold">4.</span>
+                                        <span>
+                                            Press the <code class="inline-code-block">Command</code> key. Inside you will find a String Value with name
+                                            <code class="inline-code-block">(Default)</code>.
+                                        </span>
+                                    </div>
+                                </li>
+                                <li class="flex flex-col gap-2">
+                                    <div class="flex gap-2">
+                                        <span class="font-bold">5.</span>
+                                        <span>
+                                            Right click the String Value and select <code class="inline-code-block">Modify</code>. You will now be able to
+                                            change the value and replace the url. Make sure to keep it within quotes.
+                                        </span>
+                                    </div>
+                                </li>
+                            </ol>
+                        }
+                    </div>
+                </ng-template>
+            </app-tab>
+        </app-tabs>
+    </div>
+</div>

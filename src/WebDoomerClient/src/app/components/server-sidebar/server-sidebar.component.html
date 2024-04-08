@@ -1,0 +1,117 @@
+<div class="flex h-10 items-center justify-end px-1">
+    <button (click)="clickCollapse()" class="button highlight w-10" type="button">&LessLess;</button>
+</div>
+<div class="flex flex-col gap-2 px-1">
+    <h1 class="line-clamp-1 text-center font-bold">{{ server.name }}</h1>
+
+    @if (server.state !== 'detailed') {
+        <div class="mt-10 flex flex-col gap-10">
+            <div class="grow animate-pulse">
+                <div class="h-64 w-full bg-gray-200 dark:bg-gray-700"></div>
+            </div>
+            <div class="grow animate-pulse">
+                <div class="h-48 w-full bg-gray-200 dark:bg-gray-700"></div>
+            </div>
+            <div class="grow animate-pulse">
+                <div class="h-16 w-full bg-gray-200 dark:bg-gray-700"></div>
+            </div>
+        </div>
+    } @else {
+        @if (server.url) {
+            <a
+                href="{{ server.url }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="mt-2 line-clamp-1 text-center text-sm text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+                title="Server url"
+            >
+                {{ server.url }}
+            </a>
+        }
+
+        @if (server.iwad) {
+            <div class="text-center"><span class="font-bold">IWad:</span> {{ server.iwad }}</div>
+        }
+
+        <ul class="my-1 flex flex-col gap-10">
+            @if (server.forcePassword || server.forceJoinPassword) {
+                @if (server.forcePassword) {
+                    <div class="w6 flex h-6 justify-center font-bold">
+                        <div class="relative h-full w-10">
+                            <img ngSrc="assets/server/lock.png" class="mr-2 object-contain" fill />
+                        </div>
+                        Password protected
+                    </div>
+                }
+
+                @if (server.forceJoinPassword) {
+                    <div class="w6 flex h-6 justify-center font-bold">
+                        <div class="relative h-full w-10">
+                            <img ngSrc="assets/server/lock.png" class="mr-2 object-contain" fill />
+                        </div>
+                        Join Password protected
+                    </div>
+                }
+            }
+
+            @if (playerCount != 0 || botCount != 0) {
+                <li>
+                    <div class="flex bg-gray-100 px-2 py-1 dark:border-gray-600 dark:bg-gray-700">
+                        <div class="grow font-bold">Players</div>
+                        <div class="self-center">
+                            <span class="line-clamp-1 text-xs text-gray-600 dark:text-gray-500">
+                                {{ playerCount }} player{{ playerCount != 1 ? 's' : '' }}, {{ botCount }} bot{{ botCount != 1 ? 's' : '' }}
+                            </span>
+                        </div>
+                    </div>
+                    <ul>
+                        @for (player of server.playerDataCollection; track player.name) {
+                            <li class="flex text-sm">
+                                <span class="grow">{{ player.name }}</span>
+                                <span>{{ player.ping }}ms</span>
+                            </li>
+                        }
+                    </ul>
+                </li>
+            }
+
+            @if (server.pwadCollection && server.pwadCollection.length != 0) {
+                <li>
+                    <div class="flex bg-gray-100 px-2 py-1 dark:border-gray-600 dark:bg-gray-700">
+                        <div class="grow font-bold">PWads</div>
+                        <div class="self-center">
+                            <span class="line-clamp-1 text-xs text-gray-600 dark:text-gray-500">
+                                {{ server.pwadCollection.length }} pwad{{ server.pwadCollection.length != 1 ? 's' : '' }}
+                            </span>
+                        </div>
+                    </div>
+                    <ul>
+                        @for (pwad of server.pwadCollection; track $index) {
+                            <li class="flex text-sm">
+                                <span class="grow">{{ pwad.name }}</span>
+                            </li>
+                        }
+                    </ul>
+                </li>
+            }
+
+            @if (isWindows && !isMobile) {
+                <li>
+                    <div class="flex bg-gray-100 px-2 py-1 dark:border-gray-600 dark:bg-gray-700">
+                        <div class="grow font-bold">Join command</div>
+                        <div class="self-center">
+                            <span class="line-clamp-1 text-xs text-gray-600 dark:text-gray-500"> Zandronum </span>
+                        </div>
+                    </div>
+                    <div class="h-12 overflow-x-auto whitespace-nowrap">
+                        @if (server.engine === 0) {
+                            {{ zandronumCommandLineQuery }}
+                        } @else {
+                            {{ qZandronumCommandLineQuery }}
+                        }
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</div>

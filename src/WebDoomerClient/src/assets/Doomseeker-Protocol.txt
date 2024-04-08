@@ -1,0 +1,9 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\zan]
+"URL Protocol"=""
+
+[HKEY_CLASSES_ROOT\zan\shell]
+[HKEY_CLASSES_ROOT\zan\shell\open]
+[HKEY_CLASSES_ROOT\zan\shell\open\command]
+@="\"{0}\" --connect \"%1\""
