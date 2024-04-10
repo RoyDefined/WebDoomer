@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest an idea for WebDoomer
-title: "[FEATURE] "
+title: ''
 labels: type-feature
 assignees: RoyDefined
 
