@@ -143,7 +143,7 @@ internal class ZandronumServerService : IZandronumServerService
 				yield return builder.Build(ServerResultState.TimeOut);
 			}
 
-			this._logger.LogWarning("Unfinished or timed out endpoints: {EndPointsJoined}", pendingBuilders.Select(x => x.Value.endPoint));
+			//this._logger.LogWarning("Unfinished or timed out endpoints: {EndPointsJoined}", pendingBuilders.Select(x => x.Value.endPoint));
 		}
 	}
 }

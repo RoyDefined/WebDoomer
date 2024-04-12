@@ -98,7 +98,10 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 			bag.Add(result);
 		}
 
-		this._logger.LogInformation("Finished fetching from {Address}:{Port}. Final count: {Index}", address, port, concurrentDictionary.Sum(x => x.Value.Count));
+		var completeCount = concurrentDictionary.Sum(x => x.Value.Count(x => x.State == ServerResultState.Success));
+		var errorCount = concurrentDictionary.Sum(x => x.Value.Count(x => x.State == ServerResultState.Error));
+		var timeoutCount = concurrentDictionary.Sum(x => x.Value.Count(x => x.State == ServerResultState.TimeOut));
+		this._logger.LogInformation("Finished fetching from {Address}:{Port}. Complete count: {CompleteCount}. Error count: {ErrorCount}. Timeout count: {TimeoutCount}", address, port, completeCount, errorCount, timeoutCount);
 		return concurrentDictionary;
 	}
 
