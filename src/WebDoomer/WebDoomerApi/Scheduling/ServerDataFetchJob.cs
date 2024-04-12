@@ -1,5 +1,8 @@
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using WebDoomer.QZandronum;
 using WebDoomer.Zandronum;
@@ -80,26 +83,20 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 		}
 
 		var concurrentDictionary = new ConcurrentDictionary<IPAddress, ConcurrentBag<ServerResult>>();
-		this._logger.LogInformation("Start fetching from {Address}:{Port}.", address, port);
+		var endPoints = masterResult.Hosts
+			.SelectMany(x => x.Ports.Select(y => new IPEndPoint(x.Address, y)))
+			.ToArray();
 
-		// Fetch hosts in parallel.
-		await Parallel.ForEachAsync(masterResult.Hosts, cancellationToken,
-			async (host, cancellationToken) =>
-			{
-				var endPoints = host.Ports
-					.Select(x => new IPEndPoint(host.Address, x))
-					.ToArray();
+		this._logger.LogInformation("Start fetching from {Address}:{Port}. Total endpoints: {EndPoints}.", address, port, endPoints.Length);
+		var resultsEnumerable = serverService.GetServersDataAsync(endPoints, LauncherProtocolType.OldProtocolSegmented, ServerQueryDataFlagset0.all, ServerQueryDataFlagset1.all, cancellationToken);
 
-				var resultsEnumerable = serverService.GetServersDataAsync(endPoints, LauncherProtocolType.OldProtocolSegmented, ServerQueryDataFlagset0.all, ServerQueryDataFlagset1.all, cancellationToken);
-
-				var bag = new ConcurrentBag<ServerResult>();
-				_ = concurrentDictionary.TryAdd(host.Address, bag);
-
-				await foreach (var result in resultsEnumerable)
-				{
-					bag.Add(result);
-				}
-			});
+		// Fill the dictionary with results.
+		await foreach (var result in resultsEnumerable)
+		{
+			var bag = concurrentDictionary.TryGetValue(result.EndPoint.Address, out var outBag) ? outBag : new ConcurrentBag<ServerResult>();
+			_ = concurrentDictionary.TryAdd(result.EndPoint.Address, bag);
+			bag.Add(result);
+		}
 
 		this._logger.LogInformation("Finished fetching from {Address}:{Port}. Final count: {Index}", address, port, concurrentDictionary.Sum(x => x.Value.Count));
 		return concurrentDictionary;
