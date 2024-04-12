@@ -65,7 +65,7 @@ internal class ZandronumServerService : IZandronumServerService
 		}
 
 		// Holds pending builders that have not finished due to more packets appearing.
-		// TODO: Handle servers that never responded.
+		// TODO: The dictionary should contain all endpoints from the beginning so timed out servers are logged in case they never had a packet. The code could also break out of the loop this way by checking if no pending builders are left.
 		var pendingBuilders = new Dictionary<IPEndPoint, ServerResultBuilder>();
 		while (true)
 		{
@@ -87,7 +87,7 @@ internal class ZandronumServerService : IZandronumServerService
 				.ConfigureAwait(false);
 			if (resultTask == timeoutTask)
 			{
-				yield break;
+				break;
 			}
 
 			var socketResult = await socketResultTask
@@ -114,6 +114,7 @@ internal class ZandronumServerService : IZandronumServerService
 				}
 
 				serverResult = builder.Build();
+				_ = pendingBuilders.Remove(remoteEndpoint);
 			}
 			catch (Exception ex)
 			{
@@ -127,6 +128,17 @@ internal class ZandronumServerService : IZandronumServerService
 			}
 
 			yield return serverResult;
+		}
+
+		// Handle unfinished builders.
+		if (pendingBuilders.Count > 0)
+		{
+			foreach (var builder in pendingBuilders.Values)
+			{
+				yield return builder.Build(ServerResultState.TimeOut);
+			}
+
+			this._logger.LogWarning("Unfinished or timed out endpoints: {EndPointsJoined}", pendingBuilders.Select(x => x.Value.endPoint));
 		}
 	}
 }
