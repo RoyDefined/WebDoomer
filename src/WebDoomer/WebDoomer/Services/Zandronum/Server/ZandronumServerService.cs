@@ -115,7 +115,17 @@ internal class ZandronumServerService : IZandronumServerService
 				// Continue fetching for the endpoint if more data is expected.
 				if (builder.Parse(receivePacket))
 				{
+					if (receivePacket.UnreadBytes > 0)
+					{
+						this._logger.LogWarning("Continued packet of {EndPoint} contains unreadable bytes.", remoteEndpoint);
+					}
+
 					continue;
+				}
+
+				if (receivePacket.UnreadBytes > 0)
+				{
+					this._logger.LogWarning("Final packet of {EndPoint} contains unreadable bytes.", remoteEndpoint);
 				}
 
 				serverResult = builder.Build();
