@@ -64,9 +64,10 @@ internal class ZandronumServerService : IZandronumServerService
 			socket.SendTo(packet, endPoint);
 		}
 
-		// Holds pending builders that have not finished due to more packets appearing.
-		// TODO: The dictionary should contain all endpoints from the beginning so timed out servers are logged in case they never had a packet. The code could also break out of the loop this way by checking if no pending builders are left.
-		var pendingBuilders = new Dictionary<IPEndPoint, ServerResultBuilder>();
+		// This is the main dictionary that holds the builders to eventually return the results from.
+		// Every time an endpoint is parsed and ready to build, the dictionary will remove an instance.
+		var pendingBuilders = new Dictionary<IPEndPoint, ServerResultBuilder>(endPoints.Select(x => new KeyValuePair<IPEndPoint, ServerResultBuilder>(x, new(x))));
+		
 		while (true)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
@@ -98,10 +99,13 @@ internal class ZandronumServerService : IZandronumServerService
 
 			this._logger.LogDebug("Received data from {EndPoint}. Size: {RegularSize}. Encoded size: {EncodedSize}", remoteEndpoint, receivePacket.PacketSize, receivePacket.EncodedPacketSize);
 			
-			// Get pending builder or create a new one.
-			var builder = pendingBuilders.TryGetValue(remoteEndpoint, out var result)
-				? result :
-				new ServerResultBuilder(remoteEndpoint);
+			// Get pending builder.
+			// This should only ever error if data was returned from an unexpected endpoint.
+			if (!pendingBuilders.TryGetValue(remoteEndpoint, out var builder))
+			{
+				this._logger.LogError("Could not find builder for {EndPoint}.", remoteEndpoint);
+				continue;
+			}
 
 			ServerResult serverResult;
 			try
@@ -109,7 +113,6 @@ internal class ZandronumServerService : IZandronumServerService
 				// Continue fetching for the endpoint if more data is expected.
 				if (builder.Parse(receivePacket))
 				{
-					_ = pendingBuilders.TryAdd(remoteEndpoint, builder);
 					continue;
 				}
 
