@@ -100,7 +100,9 @@
                     <div class="flex bg-gray-100 px-2 py-1 dark:border-gray-600 dark:bg-gray-700">
                         <div class="grow font-bold">Join command</div>
                         <div class="flex gap-2">
-                            <span class="line-clamp-1 self-center text-xs text-gray-600 dark:text-gray-500"> Zandronum </span>
+                            <span class="line-clamp-1 self-center text-xs text-gray-600 dark:text-gray-500">
+                                {{ server.engine === 0 ? 'Zandronum' : 'QZandronum' }}
+                            </span>
                             <button class="button w-12 text-xs" copy-to-clipboard [content]="commandLineQuery">Copy</button>
                         </div>
                     </div>
