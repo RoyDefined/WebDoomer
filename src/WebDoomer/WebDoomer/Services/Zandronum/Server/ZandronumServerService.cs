@@ -63,7 +63,7 @@ internal class ZandronumServerService : IZandronumServerService
 		{
 			socket.SendTo(packet, endPoint);
 		}
-		
+
 		// Holds pending builders that have not finished due to more packets appearing.
 		// TODO: Handle servers that never responded.
 		var pendingBuilders = new Dictionary<IPEndPoint, ServerResultBuilder>();
@@ -73,7 +73,9 @@ internal class ZandronumServerService : IZandronumServerService
 
 			// TODO: set max size.
 			var bufferData = new byte[9999];
-			var endPoint = new IPEndPoint(IPAddress.None, 0);
+
+			// Listen for any endpoint.
+			var endPoint = new IPEndPoint(IPAddress.Any, 0);
 
 			// Base timeout that will end the method should servers not respond in time.
 			// TODO: Set timeout delay.
@@ -85,21 +87,21 @@ internal class ZandronumServerService : IZandronumServerService
 				.ConfigureAwait(false);
 			if (resultTask == timeoutTask)
 			{
-				this._logger.LogDebug("Retrieving from socket ended in timeout.");
 				yield break;
 			}
 
 			var socketResult = await socketResultTask
 				.ConfigureAwait(false);
 			var data = bufferData.Take(socketResult.ReceivedBytes).ToArray();
+			var remoteEndpoint = (IPEndPoint)socketResult.RemoteEndPoint;
 			var receivePacket = new HuffmanPacket(data);
 
-			this._logger.LogDebug("Received data from {EndPoint}. Size: {RegularSize}. Encoded size: {EncodedSize}", endPoint, receivePacket.PacketSize, receivePacket.EncodedPacketSize);
+			this._logger.LogDebug("Received data from {EndPoint}. Size: {RegularSize}. Encoded size: {EncodedSize}", remoteEndpoint, receivePacket.PacketSize, receivePacket.EncodedPacketSize);
 			
 			// Get pending builder or create a new one.
-			var builder = pendingBuilders.TryGetValue(endPoint, out var result)
+			var builder = pendingBuilders.TryGetValue(remoteEndpoint, out var result)
 				? result :
-				new ServerResultBuilder(endPoint);
+				new ServerResultBuilder(remoteEndpoint);
 
 			ServerResult serverResult;
 			try
@@ -107,7 +109,7 @@ internal class ZandronumServerService : IZandronumServerService
 				// Continue fetching for the endpoint if more data is expected.
 				if (builder.Parse(receivePacket))
 				{
-					_ = pendingBuilders.TryAdd(endPoint, builder);
+					_ = pendingBuilders.TryAdd(remoteEndpoint, builder);
 					continue;
 				}
 
@@ -120,7 +122,7 @@ internal class ZandronumServerService : IZandronumServerService
 					ex = ex.InnerException;
 				}
 
-				this._logger.LogWarning("Failed to server data from {EndPoint}: {Exception}", endPoint, ex.Message);
+				this._logger.LogWarning("Failed to server data from {EndPoint}: {Exception}", remoteEndpoint, ex.Message);
 				serverResult = builder.Build(ServerResultState.Error);
 			}
 
