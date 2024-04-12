@@ -68,7 +68,8 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 
 	// This is the main invoke of the job, using the services required.
 	// The services can be Zandronum or QZandronum. QZandronum inherits from Zandronum as it's basically the same.
-	private async Task<ConcurrentDictionary<IPAddress, ServerResult[]>?> DoInvokeForEngineAsync(IZandronumMasterServerService masterServerService, IZandronumServerService serverService, string address, int port, CancellationToken cancellationToken)
+	// TODO: This should return an IAsyncEnumerable
+	private async Task<ConcurrentDictionary<IPAddress, ConcurrentBag<ServerResult>>?> DoInvokeForEngineAsync(IZandronumMasterServerService masterServerService, IZandronumServerService serverService, string address, int port, CancellationToken cancellationToken)
 	{
 		var masterResult = await masterServerService.GetMasterServerHostsAsync(address, port, cancellationToken);
 
@@ -78,42 +79,33 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 			return null;
 		}
 
-		var concurrentDictionary = new ConcurrentDictionary<IPAddress, ServerResult[]>();
+		var concurrentDictionary = new ConcurrentDictionary<IPAddress, ConcurrentBag<ServerResult>>();
 		this._logger.LogInformation("Start fetching from {Address}:{Port}.", address, port);
 
 		// Fetch hosts in parallel.
 		await Parallel.ForEachAsync(masterResult.Hosts, cancellationToken,
 			async (host, cancellationToken) =>
 			{
-				var results = await this.DoInvokeForHostAsync(serverService, host, cancellationToken);
-				_ = concurrentDictionary.TryAdd(host.Address, results);
+				var endPoints = host.Ports
+					.Select(x => new IPEndPoint(host.Address, x))
+					.ToArray();
+
+				var resultsEnumerable = serverService.GetServersDataAsync(endPoints, LauncherProtocolType.OldProtocolSegmented, ServerQueryDataFlagset0.all, ServerQueryDataFlagset1.all, cancellationToken);
+
+				var bag = new ConcurrentBag<ServerResult>();
+				_ = concurrentDictionary.TryAdd(host.Address, bag);
+
+				await foreach (var result in resultsEnumerable)
+				{
+					bag.Add(result);
+				}
 			});
 
-		this._logger.LogInformation("Finished fetching from {Address}:{Port}. Final count: {Index}", address, port, concurrentDictionary.Sum(x => x.Value.Length));
+		this._logger.LogInformation("Finished fetching from {Address}:{Port}. Final count: {Index}", address, port, concurrentDictionary.Sum(x => x.Value.Count));
 		return concurrentDictionary;
 	}
 
-	// Fetches the main data from the servers under the given host.
-	// Returns an array of results.
-	private async Task<ServerResult[]> DoInvokeForHostAsync(IZandronumServerService serverService, HostIdentification host, CancellationToken cancellationToken)
-	{
-		var results = new ServerResult[host.Ports.Count];
-		var resultInterlockedIndex = -1;
-
-		// Fetch server data in parallel.
-		await Parallel.ForEachAsync(host.Ports, cancellationToken,
-			async (port, cancellation) =>
-			{
-				var result = await serverService.GetServerDataAsync(host.Address, port, LauncherProtocolType.OldProtocolSegmented, ServerQueryDataFlagset0.all, ServerQueryDataFlagset1.all, cancellationToken);
-				var index = Interlocked.Increment(ref resultInterlockedIndex);
-				results[index] = result;
-			});
-
-		Array.Resize(ref results, resultInterlockedIndex + 1);
-		return results;
-	}
-
-	private async void AwaitFetchAndSave(Task<ConcurrentDictionary<IPAddress, ServerResult[]>?> task, EngineType engineType)
+	private async void AwaitFetchAndSave(Task<ConcurrentDictionary<IPAddress, ConcurrentBag<ServerResult>>?> task, EngineType engineType)
 	{
 		var result = await task;
 		if (result == null)

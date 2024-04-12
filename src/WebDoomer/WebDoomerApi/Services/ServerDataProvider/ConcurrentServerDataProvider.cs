@@ -18,7 +18,7 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 	/// <summary>
 	/// Represents the concurrent dictionary containing all data related to a specific's engine servers.
 	/// </summary>
-	private readonly ConcurrentDictionary<EngineType, IDictionary<IPAddress, ServerResult[]>> _engineData;
+	private readonly ConcurrentDictionary<EngineType, IDictionary<IPAddress, ConcurrentBag<ServerResult>>> _engineData;
 
 	/// <summary>
 	/// Represents a lazy loaded collection of servers.
@@ -38,7 +38,7 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 	}
 
 	/// <inheritdoc />
-	void IServerDataProvider.SetData(EngineType engineType, IDictionary<IPAddress, ServerResult[]> data)
+	void IServerDataProvider.SetData(EngineType engineType, IDictionary<IPAddress, ConcurrentBag<ServerResult>> data)
 	{
 		_ = this._engineData.Remove(engineType, out _);
 		_ = this._engineData.TryAdd(engineType, data);

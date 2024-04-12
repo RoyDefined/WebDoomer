@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Concurrent;
+using System.Net;
 using WebDoomer.Zandronum;
 using WebDoomerApi.Controllers;
 
@@ -32,5 +33,5 @@ public interface IServerDataProvider
 	/// <returns>An <see cref="IEnumerable{T}"/> of <see cref="string"/> representing the id of a server.</returns>
 	IEnumerable<string> GetServerIds(OrderByType orderBy);
 
-	internal void SetData(EngineType engineType, IDictionary<IPAddress, ServerResult[]> data);
+	internal void SetData(EngineType engineType, IDictionary<IPAddress, ConcurrentBag<ServerResult>> data);
 }
