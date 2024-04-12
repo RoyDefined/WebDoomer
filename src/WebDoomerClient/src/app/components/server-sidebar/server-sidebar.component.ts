@@ -7,12 +7,13 @@ import { clientSettingsSchema } from '../../stores/clientsettings/client-setting
 import { formatString } from '../../utils/stringUtils';
 import { isMobile } from '../../utils/isMobile';
 import { isWindows } from '../../utils/isWindows';
+import { CopyToClipboardDirective } from '../../directives/copy-to-clipboard-directive';
 
 @Component({
     standalone: true,
     selector: 'app-server-sidebar',
     templateUrl: './server-sidebar.component.html',
-    imports: [NgOptimizedImage],
+    imports: [NgOptimizedImage, CopyToClipboardDirective],
 })
 export class ServerSidebarComponent {
     @Input({ required: true }) server!: Server;
@@ -60,6 +61,10 @@ export class ServerSidebarComponent {
             this.settings?.iwadsLocation || 'Path/To/IWads/',
             this.settings?.pwadsLocation || 'Path/To/PWads/',
         );
+    }
+
+    public get commandLineQuery() {
+        return this.server.engine === 0 ? this.zandronumCommandLineQuery : this.qZandronumCommandLineQuery;
     }
 
     public get playerCount() {
