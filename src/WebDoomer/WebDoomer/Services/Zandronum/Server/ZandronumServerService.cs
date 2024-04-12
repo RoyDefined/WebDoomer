@@ -68,6 +68,10 @@ internal class ZandronumServerService : IZandronumServerService
 		// Every time an endpoint is parsed and ready to build, the dictionary will remove an instance.
 		var pendingBuilders = new Dictionary<IPEndPoint, ServerResultBuilder>(endPoints.Select(x => new KeyValuePair<IPEndPoint, ServerResultBuilder>(x, new(x))));
 		
+		// Main timeout indicates up to how long this task can run.
+		// TODO: Configurable.
+		var timeoutTask = Task.Delay(15000, CancellationToken.None);
+
 		while (true)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
@@ -79,9 +83,7 @@ internal class ZandronumServerService : IZandronumServerService
 			var endPoint = new IPEndPoint(IPAddress.Any, 0);
 
 			// Base timeout that will end the method should servers not respond in time.
-			// TODO: Set timeout delay.
 			var socketResultTask = socket.ReceiveFromAsync(bufferData, endPoint, cancellationToken).AsTask();
-			var timeoutTask = Task.Delay(5000, CancellationToken.None);
 
 			// Check if request timed out.
 			var resultTask = await Task.WhenAny(socketResultTask, timeoutTask)
