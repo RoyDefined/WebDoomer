@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using WebDoomer.Packets;
+using System.Linq;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace WebDoomer.Zandronum;
 
@@ -26,33 +28,65 @@ internal class ZandronumServerService : IZandronumServerService
 	/// <inheritdoc />
 	public async virtual Task<ServerResult> GetServerDataAsync(IPEndPoint endPoint, LauncherProtocolType protocolType, ServerQueryDataFlagset0 flagset0, ServerQueryDataFlagset1 flagset1, CancellationToken cancellationToken)
 	{
-		this._logger.LogDebug("Fetching data from server {EndPoint}. Flag set 0: ({Flagset0Int}){Flagset0}, flag set 1: ({Flagset1Int}){Flagset1}.", endPoint, (uint)flagset0, flagset0, (uint)flagset1, flagset1);
+		var resultEnumerable = this.GetServersDataAsync([endPoint], protocolType, flagset0, flagset1, cancellationToken)
+			.ConfigureAwait(false);
+		var resultArray = new ServerResult[1];
+		await foreach(var result in resultEnumerable)
+		{
+			if (resultArray[0] != null)
+			{
+				Debug.Fail("Retrieved multiple server results. Only one was expected.");
+				continue;
+			}
+
+			resultArray[0] = result;
+		}
+
+		if (resultArray[0] == null)
+		{
+			Debug.Fail("Expected a server result.");
+		}
+
+		return resultArray.Single();
+	}
+
+	/// <inheritdoc />
+	public async virtual IAsyncEnumerable<ServerResult> GetServersDataAsync(IPEndPoint[] endPoints, LauncherProtocolType protocolType, ServerQueryDataFlagset0 flagset0, ServerQueryDataFlagset1 flagset1, [EnumeratorCancellation] CancellationToken cancellationToken)
+	{
+		this._logger.LogDebug("Start fetching server data. Flag set 0: ({Flagset0Int}){Flagset0}, flag set 1: ({Flagset1Int}){Flagset1}.", (uint)flagset0, flagset0, (uint)flagset1, flagset1);
 
 		using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 		var packet = new HuffmanPacket()
 			.Write(protocolType, flagset0, flagset1);
 
-		socket.SendTo(packet, endPoint);
-
-		var builder = new ServerResultBuilder(endPoint);
+		foreach(var endPoint in endPoints)
+		{
+			socket.SendTo(packet, endPoint);
+		}
+		
+		// Holds pending builders that have not finished due to more packets appearing.
+		// TODO: Handle servers that never responded.
+		var pendingBuilders = new Dictionary<IPEndPoint, ServerResultBuilder>();
 		while (true)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
 			// TODO: set max size.
 			var bufferData = new byte[9999];
-			this._logger.LogDebug("Retrieving from socket.");
+			var endPoint = new IPEndPoint(IPAddress.None, 0);
 
-			// Retrieve with timeout to avoid waiting forever for a response.
+			// Base timeout that will end the method should servers not respond in time.
+			// TODO: Set timeout delay.
 			var socketResultTask = socket.ReceiveFromAsync(bufferData, endPoint, cancellationToken).AsTask();
-			var timeoutTask = Task.Delay(8000, CancellationToken.None);
+			var timeoutTask = Task.Delay(5000, CancellationToken.None);
 
 			// Check if request timed out.
 			var resultTask = await Task.WhenAny(socketResultTask, timeoutTask)
 				.ConfigureAwait(false);
 			if (resultTask == timeoutTask)
 			{
-				return builder.Build(ServerResultState.TimeOut);
+				this._logger.LogDebug("Retrieving from socket ended in timeout.");
+				yield break;
 			}
 
 			var socketResult = await socketResultTask
@@ -60,15 +94,24 @@ internal class ZandronumServerService : IZandronumServerService
 			var data = bufferData.Take(socketResult.ReceivedBytes).ToArray();
 			var receivePacket = new HuffmanPacket(data);
 
-			this._logger.LogDebug("Received packet. Size: {RegularSize}. Encoded size: {EncodedSize}", receivePacket.PacketSize, receivePacket.EncodedPacketSize);
+			this._logger.LogDebug("Received data from {EndPoint}. Size: {RegularSize}. Encoded size: {EncodedSize}", endPoint, receivePacket.PacketSize, receivePacket.EncodedPacketSize);
+			
+			// Get pending builder or create a new one.
+			var builder = pendingBuilders.TryGetValue(endPoint, out var result)
+				? result :
+				new ServerResultBuilder(endPoint);
 
+			ServerResult serverResult;
 			try
 			{
-				// Continue fetch if this is not the last packet.
+				// Continue fetching for the endpoint if more data is expected.
 				if (builder.Parse(receivePacket))
 				{
+					_ = pendingBuilders.TryAdd(endPoint, builder);
 					continue;
 				}
+
+				serverResult = builder.Build();
 			}
 			catch (Exception ex)
 			{
@@ -78,10 +121,10 @@ internal class ZandronumServerService : IZandronumServerService
 				}
 
 				this._logger.LogWarning("Failed to server data from {EndPoint}: {Exception}", endPoint, ex.Message);
-				return builder.Build(ServerResultState.Error);
+				serverResult = builder.Build(ServerResultState.Error);
 			}
 
-			return builder.Build();
+			yield return serverResult;
 		}
 	}
 }
