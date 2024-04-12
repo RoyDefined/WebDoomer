@@ -72,7 +72,7 @@ internal class ZandronumServerService : IZandronumServerService
 		// TODO: Configurable.
 		var timeoutTask = Task.Delay(15000, CancellationToken.None);
 
-		while (true)
+		while (pendingBuilders.Count > 0)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
