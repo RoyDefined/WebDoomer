@@ -13,6 +13,12 @@ internal class ZandronumServerService : IZandronumServerService
 {
 	/// <inheritdoc cref="ILogger"/>
 	protected readonly ILogger _logger;
+
+	// TODO: Make these variables configurable.
+	private readonly int _endPointsPerBuffer = 50;
+	private readonly int _maximumPacketSize = 5000;
+	private readonly TimeSpan _fetchTaskTimeout = TimeSpan.FromSeconds(15);
+
 	public ZandronumServerService(
 		ILogger<ZandronumServerService> logger)
 	{
@@ -57,12 +63,9 @@ internal class ZandronumServerService : IZandronumServerService
 		// Divide endpoints over a number of sockets.
 		var buffers = new List<IPEndPoint[]>();
 
-		// TODO: Configurable
-		var endPointsPerSocket = 50;
-
-		for (int i = 0; i < endPoints.Length; i += endPointsPerSocket)
+		for (var i = 0; i < endPoints.Length; i += this._endPointsPerBuffer)
 		{
-			buffers.Add(endPoints.Skip(i).Take(endPointsPerSocket).ToArray());
+			buffers.Add(endPoints.Skip(i).Take(this._endPointsPerBuffer).ToArray());
 		}
 
 		this._logger.LogInformation("Start fetching server data. Total sockets: {SocketCount}. Flag set 0: ({Flagset0Int}){Flagset0}, flag set 1: ({Flagset1Int}){Flagset1}.", buffers.Count, (uint)flagset0, flagset0, (uint)flagset1, flagset1);
@@ -100,21 +103,18 @@ internal class ZandronumServerService : IZandronumServerService
 		var pendingBuilders = new Dictionary<IPEndPoint, ServerResultBuilder>(endPoints.Select(x => new KeyValuePair<IPEndPoint, ServerResultBuilder>(x, new(x))));
 
 		// Main timeout indicates up to how long this task can run.
-		// TODO: Configurable.
-		var timeoutTask = Task.Delay(15000, CancellationToken.None);
+		var timeoutTask = Task.Delay(this._fetchTaskTimeout, CancellationToken.None);
 
 		while (pendingBuilders.Count > 0)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
+			var bufferData = new byte[this._maximumPacketSize];
 
-			// TODO: set max size.
-			var bufferData = new byte[9999];
-
-			// Listen for any endpoint.
-			var endPoint = new IPEndPoint(IPAddress.Any, 0);
+			// Listen for any endpoint rather than a specific one.
+			var endPointAny = new IPEndPoint(IPAddress.Any, 0);
 
 			// Base timeout that will end the method should servers not respond in time.
-			var socketResultTask = socket.ReceiveFromAsync(bufferData, endPoint, cancellationToken).AsTask();
+			var socketResultTask = socket.ReceiveFromAsync(bufferData, endPointAny, cancellationToken).AsTask();
 
 			// Check if request timed out.
 			var resultTask = await Task.WhenAny(socketResultTask, timeoutTask)

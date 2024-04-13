@@ -10,6 +10,10 @@ internal class ZandronumMasterServerService : IZandronumMasterServerService
 	/// <inheritdoc cref="ILogger"/>
 	protected readonly ILogger _logger;
 
+	// TODO: Make these variables configurable.
+	private readonly int _maximumPacketSize = 5000;
+	private readonly TimeSpan _fetchTaskTimeout = TimeSpan.FromSeconds(15);
+
 	public ZandronumMasterServerService(
 		ILogger<ZandronumMasterServerService> logger)
 	{
@@ -69,13 +73,12 @@ internal class ZandronumMasterServerService : IZandronumMasterServerService
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
-			// TODO: set max size.
-			var bufferData = new byte[9999];
+			var bufferData = new byte[this._maximumPacketSize];
 			this._logger.LogDebug("Retrieving from socket.");
 
 			// Retrieve with timeout to avoid waiting forever for a response.
 			var socketResultTask = socket.ReceiveFromAsync(bufferData, endPoint, cancellationToken).AsTask();
-			var timeoutTask = Task.Delay(8000, CancellationToken.None);
+			var timeoutTask = Task.Delay(this._fetchTaskTimeout, CancellationToken.None);
 
 			// Check if request timed out.
 			var resultTask = await Task.WhenAny(socketResultTask, timeoutTask)
