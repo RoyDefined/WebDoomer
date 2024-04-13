@@ -13,32 +13,32 @@
 
     "Fetch Zandronum server with old protocol": {
       "commandName": "Project",
-      "commandLineArgs": "--engine Zandronum --fetch Server --protocol OldProtocol --serveraddress \"142.132.155.163\" --serverport 10696"
+      "commandLineArgs": "--engine Zandronum --fetch Server --protocol OldProtocol --serveraddress \"127.0.0.1\" --serverport 10666"
     },
 
     "Fetch Zandronum server with old segmented protocol": {
       "commandName": "Project",
-      "commandLineArgs": "--engine Zandronum --fetch Server --protocol OldProtocolSegmented --serveraddress \"142.132.155.163\" --serverport 10696"
+      "commandLineArgs": "--engine Zandronum --fetch Server --protocol OldProtocolSegmented --serveraddress \"127.0.0.1\" --serverport 10666"
     },
 
     "Fetch Zandronum server with new protocol": {
       "commandName": "Project",
-      "commandLineArgs": "--engine Zandronum --fetch Server --protocol NewProtocol --serveraddress \"142.132.155.163\" --serverport 10696"
+      "commandLineArgs": "--engine Zandronum --fetch Server --protocol NewProtocol --serveraddress \"127.0.0.1\" --serverport 10666"
     },
 
     "Fetch QZandronum servers from master server": {
       "commandName": "Project",
-      "commandLineArgs": "--engine QZandronum --fetch Master --masterserveraddress \"master.qzandronum.com\" --masterserverport 15300"
+      "commandLineArgs": "--engine QZandronum --fetch Master --masterserveraddress \"master.qzandronum.com\" --masterserverport 10666"
     },
 
     "Fetch QZandronum server with old protocol": {
       "commandName": "Project",
-      "commandLineArgs": "--engine QZandronum --fetch Server --protocol OldProtocol --serveraddress \"142.132.155.163\" --serverport 10667"
+      "commandLineArgs": "--engine QZandronum --fetch Server --protocol OldProtocol --serveraddress \"127.0.0.1\" --serverport 10666"
     },
 
     "Fetch QZandronum server with old segmented protocol": {
       "commandName": "Project",
-      "commandLineArgs": "--engine QZandronum --fetch Server --protocol OldProtocolSegmented --serveraddress \"142.132.155.163\" --serverport 10667"
+      "commandLineArgs": "--engine QZandronum --fetch Server --protocol OldProtocolSegmented --serveraddress \"127.0.0.1\" --serverport 10666"
     }
   }
 }
