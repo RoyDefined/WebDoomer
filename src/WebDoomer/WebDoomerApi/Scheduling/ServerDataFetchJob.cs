@@ -107,13 +107,20 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 
 	private async void AwaitFetchAndSave(Task<ConcurrentDictionary<IPAddress, ConcurrentBag<ServerResult>>?> task, EngineType engineType)
 	{
-		var result = await task;
-		if (result == null)
+		try
 		{
-			return;
-		}
+			var result = await task;
+			if (result == null)
+			{
+				return;
+			}
 
-		this._serverDataProvider.SetData(engineType, result);
+			this._serverDataProvider.SetData(engineType, result);
+		}
+		catch (Exception ex)
+		{
+			this._logger.LogError(ex, "There was an error fetching all servers for {Engine}", engineType);
+		}
 	}
 
 	public static void Register(WebApplication app)
