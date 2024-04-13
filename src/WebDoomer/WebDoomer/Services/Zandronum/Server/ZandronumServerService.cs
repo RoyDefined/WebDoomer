@@ -5,6 +5,7 @@ using WebDoomer.Packets;
 using System.Linq;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Collections.Concurrent;
 
 namespace WebDoomer.Zandronum;
 
@@ -53,13 +54,43 @@ internal class ZandronumServerService : IZandronumServerService
 	/// <inheritdoc />
 	public async virtual IAsyncEnumerable<ServerResult> GetServersDataAsync(IPEndPoint[] endPoints, LauncherProtocolType protocolType, ServerQueryDataFlagset0 flagset0, ServerQueryDataFlagset1 flagset1, [EnumeratorCancellation] CancellationToken cancellationToken)
 	{
-		this._logger.LogDebug("Start fetching server data. Flag set 0: ({Flagset0Int}){Flagset0}, flag set 1: ({Flagset1Int}){Flagset1}.", (uint)flagset0, flagset0, (uint)flagset1, flagset1);
+		// Divide endpoints over a number of sockets.
+		var buffers = new List<IPEndPoint[]>();
 
-		using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+		// TODO: Configurable
+		var endPointsPerSocket = 50;
+
+		for (int i = 0; i < endPoints.Length; i += endPointsPerSocket)
+		{
+			buffers.Add(endPoints.Skip(i).Take(endPointsPerSocket).ToArray());
+		}
+
+		this._logger.LogInformation("Start fetching server data. Total sockets: {SocketCount}. Flag set 0: ({Flagset0Int}){Flagset0}, flag set 1: ({Flagset1Int}){Flagset1}.", buffers.Count, (uint)flagset0, flagset0, (uint)flagset1, flagset1);
+
+		var bag = new ConcurrentBag<ServerResult>();
+		await Parallel.ForEachAsync(buffers, cancellationToken, async (buffer, _) =>
+		{
+			using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+			var resultEnumerable = this.GetServersDataAsync(buffer, socket, protocolType, flagset0, flagset1, cancellationToken);
+			await foreach(var result in resultEnumerable)
+			{
+				bag.Add(result);
+			}
+		}).ConfigureAwait(false);
+
+		// TODO: Properly implement the async enumerable.
+		foreach(var result in bag)
+		{
+			yield return result;
+		}
+	}
+
+	private async IAsyncEnumerable<ServerResult> GetServersDataAsync(IPEndPoint[] endPoints, Socket socket, LauncherProtocolType protocolType, ServerQueryDataFlagset0 flagset0, ServerQueryDataFlagset1 flagset1, [EnumeratorCancellation] CancellationToken cancellationToken)
+	{
 		var packet = new HuffmanPacket()
 			.Write(protocolType, flagset0, flagset1);
 
-		foreach(var endPoint in endPoints)
+		foreach (var endPoint in endPoints)
 		{
 			socket.SendTo(packet, endPoint);
 		}
@@ -67,7 +98,7 @@ internal class ZandronumServerService : IZandronumServerService
 		// This is the main dictionary that holds the builders to eventually return the results from.
 		// Every time an endpoint is parsed and ready to build, the dictionary will remove an instance.
 		var pendingBuilders = new Dictionary<IPEndPoint, ServerResultBuilder>(endPoints.Select(x => new KeyValuePair<IPEndPoint, ServerResultBuilder>(x, new(x))));
-		
+
 		// Main timeout indicates up to how long this task can run.
 		// TODO: Configurable.
 		var timeoutTask = Task.Delay(15000, CancellationToken.None);
@@ -100,7 +131,7 @@ internal class ZandronumServerService : IZandronumServerService
 			var receivePacket = new HuffmanPacket(data);
 
 			this._logger.LogDebug("Received data from {EndPoint}. Size: {RegularSize}. Encoded size: {EncodedSize}", remoteEndpoint, receivePacket.PacketSize, receivePacket.EncodedPacketSize);
-			
+
 			// Get pending builder.
 			// This should only ever error if data was returned from an unexpected endpoint.
 			if (!pendingBuilders.TryGetValue(remoteEndpoint, out var builder))
