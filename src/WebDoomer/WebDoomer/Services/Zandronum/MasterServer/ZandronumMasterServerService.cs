@@ -58,7 +58,7 @@ internal class ZandronumMasterServerService : IZandronumMasterServerService
 		this._logger.LogDebug("Fetching server hosts from master server {IPEndpoint}.", endPoint.ToString());
 
 		using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-		var packet = new HuffmanPacket()
+		var packet = new HuffmanPacket(sizeof(int) + sizeof(short))
 			.Write(PacketData.LauncherMasterChallenge)
 			.Write(PacketData.MasterServerVersion);
 

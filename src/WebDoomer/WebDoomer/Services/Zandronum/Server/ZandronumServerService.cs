@@ -87,7 +87,7 @@ internal class ZandronumServerService : IZandronumServerService
 
 	private async IAsyncEnumerable<ServerResult> GetServersDataAsync(IPEndPoint[] endPoints, Socket socket, LauncherProtocolType protocolType, ServerQueryDataFlagset0 flagset0, ServerQueryDataFlagset1 flagset1, [EnumeratorCancellation] CancellationToken cancellationToken)
 	{
-		var packet = new HuffmanPacket()
+		var packet = new HuffmanPacket(sizeof(int) * 4 + sizeof(byte))
 			.Write(protocolType, flagset0, flagset1);
 
 		foreach (var endPoint in endPoints)
