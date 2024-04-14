@@ -71,7 +71,7 @@ internal class ZandronumServerService : IZandronumServerService
 		this._logger.LogInformation("Start fetching server data. Total sockets: {SocketCount}. Flag set 0: ({Flagset0Int}){Flagset0}, flag set 1: ({Flagset1Int}){Flagset1}.", buffers.Count, (uint)flagset0, flagset0, (uint)flagset1, flagset1);
 
 		var bag = new ConcurrentBag<ServerResult>();
-		await Parallel.ForEachAsync(buffers, cancellationToken, async (buffer, _) =>
+		var parallelTask = Parallel.ForEachAsync(buffers, cancellationToken, async (buffer, _) =>
 		{
 			using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 			var resultEnumerable = this.GetServersDataAsync(buffer, socket, protocolType, flagset0, flagset1, cancellationToken);
@@ -79,13 +79,21 @@ internal class ZandronumServerService : IZandronumServerService
 			{
 				bag.Add(result);
 			}
-		}).ConfigureAwait(false);
+		});
 
-		// TODO: Properly implement the async enumerable.
-		foreach(var result in bag)
+		while(!parallelTask.IsCompleted || !bag.IsEmpty)
 		{
+			if (!bag.TryTake(out var result))
+			{
+				await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken)
+					.ConfigureAwait(false);
+				continue;
+			}
+
 			yield return result;
 		}
+
+		await parallelTask.ConfigureAwait(false);
 	}
 
 	private async IAsyncEnumerable<ServerResult> GetServersDataAsync(IPEndPoint[] endPoints, Socket socket, LauncherProtocolType protocolType, ServerQueryDataFlagset0 flagset0, ServerQueryDataFlagset1 flagset1, [EnumeratorCancellation] CancellationToken cancellationToken)

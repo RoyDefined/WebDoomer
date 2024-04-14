@@ -33,5 +33,7 @@ public interface IServerDataProvider
 	/// <returns>An <see cref="IEnumerable{T}"/> of <see cref="string"/> representing the id of a server.</returns>
 	IEnumerable<string> GetServerIds(OrderByType orderBy);
 
-	internal void SetData(EngineType engineType, IDictionary<IPAddress, ConcurrentBag<ServerResult>> data);
+	internal void StartSetData(EngineType engineType);
+	internal void AddData(EngineType engineType, ServerResult serverResult);
+	internal void EndSetData(EngineType engineType);
 }

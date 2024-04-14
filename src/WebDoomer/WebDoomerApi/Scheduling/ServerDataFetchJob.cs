@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using WebDoomer.QZandronum;
 using WebDoomer.Zandronum;
 using WebDoomerApi.Scheduling;
@@ -52,37 +53,34 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 	{
 		this._logger.LogDebug("Server data fetch job invoked.");
 
-		var zandronumServerFetchTask = this.DoInvokeForEngineAsync(this._zandronumMasterServerService, this._zandronumServerService, "master.zandronum.com", 15300, cancellationToken);
-		var qZandronumServerFetchTask = this.DoInvokeForEngineAsync(this._qZandronumMasterServerService, this._qZandronumServerService, "master.qzandronum.com", 15300, cancellationToken);
-
-		Debug.Assert(zandronumServerFetchTask != null);
-		Debug.Assert(qZandronumServerFetchTask != null);
+		var zandronumServerEnumerable = this.DoInvokeForEngineAsync(this._zandronumMasterServerService, this._zandronumServerService, "master.zandronum.com", 15300, cancellationToken);
+		var qZandronumServerEnumerable = this.DoInvokeForEngineAsync(this._qZandronumMasterServerService, this._qZandronumServerService, "master.qzandronum.com", 15300, cancellationToken);
 
 		// Delegate to a function that awaits the result and stores the result in the provider.
-		this.AwaitFetchAndSave(zandronumServerFetchTask, EngineType.Zandronum);
-		this.AwaitFetchAndSave(qZandronumServerFetchTask, EngineType.QZandronum);
+		var zandronumServerFetchTask = this.AwaitFetchAndSave(zandronumServerEnumerable, EngineType.Zandronum);
+		var qZandronumServerFetchTask = this.AwaitFetchAndSave(qZandronumServerEnumerable, EngineType.QZandronum);
 
 		// Await the tasks so the job gracefully ends and allows the scheduler to correctly set the next invoke.
-		var tasks = Task.WhenAll([zandronumServerFetchTask, qZandronumServerFetchTask]);
-		_ = await tasks;
+		var task = Task.WhenAll([zandronumServerFetchTask, qZandronumServerFetchTask]);
+		await task;
 
 		this._logger.LogDebug("Server data fetch job finished.");
 	}
 
 	// This is the main invoke of the job, using the services required.
 	// The services can be Zandronum or QZandronum. QZandronum inherits from Zandronum as it's basically the same.
-	// TODO: This should return an IAsyncEnumerable
-	private async Task<ConcurrentDictionary<IPAddress, ConcurrentBag<ServerResult>>?> DoInvokeForEngineAsync(IZandronumMasterServerService masterServerService, IZandronumServerService serverService, string address, int port, CancellationToken cancellationToken)
+	private async IAsyncEnumerable<ServerResult> DoInvokeForEngineAsync(IZandronumMasterServerService masterServerService, IZandronumServerService serverService, string address, int port, [EnumeratorCancellation] CancellationToken cancellationToken)
 	{
+		this._logger.LogInformation("Result servers from master server {Address}:{Port}.", address, port);
 		var masterResult = await masterServerService.GetMasterServerHostsAsync(address, port, cancellationToken);
 
 		// No result
 		if (masterResult.ServerChallengeResponse != ServerChallengeResponseType.beginServerListPart)
 		{
-			return null;
+			this._logger.LogWarning("Master server {Address}:{Port} returned non-positive response.", address, port);
+			yield break;
 		}
 
-		var concurrentDictionary = new ConcurrentDictionary<IPAddress, ConcurrentBag<ServerResult>>();
 		var endPoints = masterResult.Hosts
 			.SelectMany(x => x.Ports.Select(y => new IPEndPoint(x.Address, y)))
 			.ToArray();
@@ -90,36 +88,30 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 		this._logger.LogInformation("Start fetching from {Address}:{Port}. Total endpoints: {EndPoints}.", address, port, endPoints.Length);
 		var resultsEnumerable = serverService.GetServersDataAsync(endPoints, LauncherProtocolType.OldProtocolSegmented, ServerQueryDataFlagset0.all, ServerQueryDataFlagset1.all, cancellationToken);
 
-		// Fill the dictionary with results.
 		await foreach (var result in resultsEnumerable)
 		{
-			var bag = concurrentDictionary.TryGetValue(result.EndPoint.Address, out var outBag) ? outBag : new ConcurrentBag<ServerResult>();
-			_ = concurrentDictionary.TryAdd(result.EndPoint.Address, bag);
-			bag.Add(result);
+			yield return result;
 		}
-
-		var completeCount = concurrentDictionary.Sum(x => x.Value.Count(x => x.State == ServerResultState.Success));
-		var errorCount = concurrentDictionary.Sum(x => x.Value.Count(x => x.State == ServerResultState.Error));
-		var timeoutCount = concurrentDictionary.Sum(x => x.Value.Count(x => x.State == ServerResultState.TimeOut));
-		this._logger.LogInformation("Finished fetching from {Address}:{Port}. Complete count: {CompleteCount}. Error count: {ErrorCount}. Timeout count: {TimeoutCount}", address, port, completeCount, errorCount, timeoutCount);
-		return concurrentDictionary;
 	}
 
-	private async void AwaitFetchAndSave(Task<ConcurrentDictionary<IPAddress, ConcurrentBag<ServerResult>>?> task, EngineType engineType)
+	private async Task AwaitFetchAndSave(IAsyncEnumerable<ServerResult> asyncEnumerable, EngineType engineType)
 	{
+		this._serverDataProvider.StartSetData(engineType);
+
 		try
 		{
-			var result = await task;
-			if (result == null)
+			await foreach(var serverResult in asyncEnumerable)
 			{
-				return;
+				this._serverDataProvider.AddData(engineType, serverResult);
 			}
-
-			this._serverDataProvider.SetData(engineType, result);
 		}
 		catch (Exception ex)
 		{
 			this._logger.LogError(ex, "There was an error fetching all servers for {Engine}", engineType);
+		}
+		finally
+		{
+			this._serverDataProvider.EndSetData(engineType);
 		}
 	}
 

@@ -3,10 +3,10 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Net;
 using WebDoomer.Zandronum;
-using WebDoomerApi.Controllers;
 
 namespace WebDoomerApi.Services;
 
+// TODO: The pending data should copy itself over to the main data once enough servers exist for a given engine.
 internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 {
 	/// <inheritdoc cref="ILogger"/>
@@ -18,7 +18,12 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 	/// <summary>
 	/// Represents the concurrent dictionary containing all data related to a specific's engine servers.
 	/// </summary>
-	private readonly ConcurrentDictionary<EngineType, IDictionary<IPAddress, ConcurrentBag<ServerResult>>> _engineData;
+	private readonly ConcurrentDictionary<EngineType, ConcurrentBag<ServerResult>> _data;
+
+	/// <summary>
+	/// Represents the concurrent dictionary containing pending data that will replace <see cref="_data"/> once all servers were fetched.
+	/// </summary>
+	private readonly ConcurrentDictionary<EngineType, ConcurrentBag<ServerResult>> _pendingData;
 
 	/// <summary>
 	/// Represents a lazy loaded collection of servers.
@@ -33,20 +38,51 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 		this._logger = logger;
 
 		this._encoder = new();
-		this._engineData = new();
+		this._data = new();
+		this._pendingData = new();
 		this._servers = new(this.LazyGetServers);
 	}
 
 	/// <inheritdoc />
-	void IServerDataProvider.SetData(EngineType engineType, IDictionary<IPAddress, ConcurrentBag<ServerResult>> data)
+	void IServerDataProvider.StartSetData(EngineType engineType)
 	{
-		_ = this._engineData.Remove(engineType, out _);
-		_ = this._engineData.TryAdd(engineType, data);
+		_ = this._pendingData.Remove(engineType, out _);
+	}
 
-		if(this._servers.IsValueCreated)
+	/// <inheritdoc />
+	void IServerDataProvider.AddData(EngineType engineType, ServerResult serverResult)
+	{
+		var bag = this._pendingData.TryGetValue(engineType, out var outBag) ?
+			outBag :
+			new();
+
+		_ = this._pendingData.TryAdd(engineType, bag);
+
+		bag.Add(serverResult);
+	}
+
+	/// <inheritdoc />
+	void IServerDataProvider.EndSetData(EngineType engineType)
+	{
+		if (!this._pendingData.TryGetValue(engineType, out var servers))
+		{
+			this._logger.LogError("Failed to copy server results over from pending data to actual data for {Engine}.", engineType);
+			return;
+		}
+
+		_ = this._data.Remove(engineType, out _);
+		_ = this._data.TryAdd(engineType, servers);
+
+		// Reset lazy loaded servers.
+		if (this._servers.IsValueCreated)
 		{
 			this._servers = new(this.LazyGetServers);
 		}
+
+		var completeCount = this._data[engineType].Count(x => x.State == ServerResultState.Success);
+		var errorCount = this._data[engineType].Count(x => x.State == ServerResultState.Error);
+		var timeoutCount = this._data[engineType].Count(x => x.State == ServerResultState.TimeOut);
+		this._logger.LogInformation("Final collection for {Engine}: Complete count: {CompleteCount}. Error count: {ErrorCount}. Timeout count: {TimeoutCount}", engineType, completeCount, errorCount, timeoutCount);
 	}
 
 	/// <inheritdoc />
@@ -100,20 +136,10 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 
 	private ReadOnlyCollection<ProvidedServer> LazyGetServers()
 	{
-		return new(this.LazyGetServersEnumerable().ToArray());
-	}
+		var servers = this._data
+			.SelectMany(x =>
+				x.Value.Select(y => ProvidedServer.Create(y, x.Key, this._encoder)));
 
-	private IEnumerable<ProvidedServer> LazyGetServersEnumerable()
-	{
-		foreach (var (engine, engineResults) in this._engineData)
-		{
-			foreach(var serverResults in engineResults.Values)
-			{
-				foreach(var serverResult in serverResults)
-				{
-					yield return ProvidedServer.Create(serverResult, engine, this._encoder);
-				}
-			}
-		}
+		return new(servers.ToArray());
 	}
 }
