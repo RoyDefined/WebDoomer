@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using System.Net.NetworkInformation;
 
 namespace WebDoomer.Zandronum;
 
@@ -112,15 +113,21 @@ public sealed class ServerResult
 			(BotSkill)builder.botSkill :
 			null;
 
-		var playerEnumerable = builder.playerDataCollection?.Select(x => new Player()
+		var playerEnumerable = builder.playerDataCollection?.Select(x =>
 		{
-			Name = x.Name,
-			ScoreCount = x.ScoreCount,
-			Ping = x.Ping,
-			IsSpectating = x.IsSpectating,
-			IsBot = x.IsBot,
-			Team = x.Team,
-			PlayTime = x.PlayTime,
+			// Make sure ping is valid. Also handle 0 as this covers bots.
+			short? ping = x.Ping <= 0 ? null : x.Ping;
+
+			return new Player()
+			{
+				Name = x.Name,
+				ScoreCount = x.ScoreCount,
+				Ping = ping,
+				IsSpectating = x.IsSpectating,
+				IsBot = x.IsBot,
+				Team = x.Team,
+				PlayTime = x.PlayTime,
+			};
 		});
 
 		var playerCollection = playerEnumerable != null ?
