@@ -21,7 +21,8 @@
             {{ server.name }}
         </div>
 
-        <div class="flex w-40 flex-wrap justify-end gap-1" [tooltip]="playerCountTitle">
+        <!-- Minimum width still allows the tooltip to trigger with no players. -->
+        <div class="flex min-w-10 max-w-40 flex-wrap justify-end gap-1" [tooltip]="playerCountTitle">
             <span class="sr-only">{{ playerCountTitle }}</span>
 
             @if (server.playingClientCount) {
