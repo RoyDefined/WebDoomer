@@ -25,24 +25,35 @@
         </div>
 
         <!-- Minimum width still allows the tooltip to trigger with no players. -->
-        <div
-            class="hidden min-w-10 max-w-40 flex-wrap justify-end gap-1 group-[.expand-at-sm]:sm:flex group-[.expand-at-md]:md:flex group-[.expand-at-lg]:lg:flex group-[.expand-at-xl]:xl:flex group-[.expand-at-2xl]:2xl:flex"
-            [tooltip]="playerCountTitle"
-        >
+        <div class="flex min-w-10 justify-end" [tooltip]="playerCountTitle">
             <span class="sr-only">{{ playerCountTitle }}</span>
 
-            @if (server.playingClientCount) {
-                <span *ngFor="let item of [].constructor(server.playingClientCount)" class="min-w-3 bg-green-500"></span>
-            }
-            @if (server.spectatingClientCount) {
-                <span *ngFor="let item of [].constructor(server.spectatingClientCount)" class="min-w-3 bg-green-500 opacity-30"></span>
-            }
-            @if (server.botCount) {
-                <span
-                    *ngFor="let item of [].constructor(server.botCount)"
-                    class="pattern-rectangles min-w-3 pattern-slate-500 pattern-opacity-100 pattern-size-1"
+            <!-- Player icons to indicate count. Replaced with numbers if there isn't much room. -->
+            <div
+                class="hidden max-w-40 flex-wrap justify-end gap-1 group-[.expand-at-sm]:sm:flex group-[.expand-at-md]:md:flex group-[.expand-at-lg]:lg:flex group-[.expand-at-xl]:xl:flex group-[.expand-at-2xl]:2xl:flex"
+            >
+                @if (server.playingClientCount) {
+                    <span *ngFor="let item of [].constructor(server.playingClientCount)" class="min-w-3 bg-green-500"></span>
+                }
+                @if (server.spectatingClientCount) {
+                    <span *ngFor="let item of [].constructor(server.spectatingClientCount)" class="min-w-3 bg-green-500 opacity-30"></span>
+                }
+                @if (server.botCount) {
+                    <span
+                        *ngFor="let item of [].constructor(server.botCount)"
+                        class="pattern-rectangles min-w-3 pattern-slate-500 pattern-opacity-100 pattern-size-1"
+                    >
+                    </span>
+                }
+            </div>
+
+            <!-- Player numbers to indicate count. Replaces the icons if there isn't much room. -->
+            @if (clientCount) {
+                <div
+                    class="block content-center text-sm font-bold group-[.expand-at-sm]:sm:hidden group-[.expand-at-md]:md:hidden group-[.expand-at-lg]:lg:hidden group-[.expand-at-xl]:xl:hidden group-[.expand-at-2xl]:2xl:hidden"
                 >
-                </span>
+                    {{ clientCount }}/{{ server.maxClients || 0 }}
+                </div>
             }
         </div>
     }

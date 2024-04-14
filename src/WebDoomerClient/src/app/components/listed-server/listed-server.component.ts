@@ -40,19 +40,22 @@ export class ListedServerComponent implements OnChanges {
         return countryFlagurl;
     }
 
+    public get clientCount() {
+        return (this.server.playingClientCount || 0) + (this.server.spectatingClientCount || 0);
+    }
+
     public get playerCountTitle() {
-        const clientCount = (this.server.playingClientCount || 0) + (this.server.spectatingClientCount || 0);
         const botCount = this.server.botCount || 0;
         const slots = this.server.maxClients || 0;
         let title = 'This server has ';
 
-        if (clientCount == 0 && botCount == 0) {
+        if (this.clientCount == 0 && botCount == 0) {
             title += 'no players.';
             return title;
         }
 
-        if (clientCount > 0) {
-            title += clientCount + ' player' + (clientCount > 1 ? 's' : '');
+        if (this.clientCount > 0) {
+            title += this.clientCount + ' player' + (this.clientCount > 1 ? 's' : '');
         } else {
             title += 'no clients';
         }
