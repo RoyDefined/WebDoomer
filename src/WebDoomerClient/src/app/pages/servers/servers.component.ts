@@ -17,6 +17,7 @@ import { isMobile } from '../../utils/isMobile';
 import { isWindows } from '../../utils/isWindows';
 import { z } from 'zod';
 import { clientSettingsSchema } from '../../stores/clientsettings/client-settings-schema';
+import { MediaQuerySize } from '../../utils/media-query-size';
 
 @Component({
     standalone: true,
@@ -59,6 +60,11 @@ export class ServersComponent implements OnInit, AfterViewInit {
     private _virtualScrollViewportSubscription?: Subscription;
 
     public readonly settings$ = this._clientSettingsStore.settings$;
+
+    /** Indicates at what media query size server rows are expected to be fully expanded. */
+    public get expandListMediaQuerySize(): MediaQuerySize {
+        return this.selectedServer ? 'xl' : 'md';
+    }
 
     public get isMobile() {
         return isMobile();

@@ -1,5 +1,8 @@
 <div
-    class="flex h-10 gap-2 px-4 py-2 aria-[selected='true']:bg-gray-200 aria-[selected='false']:hover:bg-gray-300 aria-[selected='true']:dark:bg-gray-900 aria-[selected='false']:dark:hover:bg-gray-600"
+    [className]="
+        'flex h-10 gap-2 px-4 py-2 aria-[selected=\'true\']:bg-gray-200 aria-[selected=\'false\']:hover:bg-gray-300 aria-[selected=\'true\']:dark:bg-gray-900 aria-[selected=\'false\']:dark:hover:bg-gray-600 group expand-at-' +
+        this.expandListMediaQuerySize
+    "
     [attr.aria-selected]="this.selected"
     [ngClass]="{
         'cursor-pointer': !server.fetching
@@ -22,7 +25,10 @@
         </div>
 
         <!-- Minimum width still allows the tooltip to trigger with no players. -->
-        <div class="flex min-w-10 max-w-40 flex-wrap justify-end gap-1" [tooltip]="playerCountTitle">
+        <div
+            class="hidden min-w-10 max-w-40 flex-wrap justify-end gap-1 group-[.expand-at-sm]:sm:flex group-[.expand-at-md]:md:flex group-[.expand-at-lg]:lg:flex group-[.expand-at-xl]:xl:flex group-[.expand-at-2xl]:2xl:flex"
+            [tooltip]="playerCountTitle"
+        >
             <span class="sr-only">{{ playerCountTitle }}</span>
 
             @if (server.playingClientCount) {
@@ -42,7 +48,12 @@
     }
 
     @if (isWindows && !isMobile) {
-        <a stop-propagation [href]="'zan://' + server.ip + ':' + server.port" class="button highlight ml-3 min-w-32 self-center text-center" type="button">
+        <a
+            stop-propagation
+            [href]="'zan://' + server.ip + ':' + server.port"
+            class="button highlight ml-3 min-w-12 self-center text-center group-[.expand-at-sm]:sm:min-w-32 group-[.expand-at-md]:md:min-w-32 group-[.expand-at-lg]:lg:min-w-32 group-[.expand-at-xl]:xl:min-w-32 group-[.expand-at-2xl]:2xl:min-w-32"
+            type="button"
+        >
             Join
         </a>
     }

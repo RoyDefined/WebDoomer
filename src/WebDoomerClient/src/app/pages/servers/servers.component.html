@@ -72,6 +72,7 @@
                     *cdkVirtualFor="let server of vm.servers; trackBy: trackByItemId"
                     [server]="server"
                     [selected]="selectedServer === server"
+                    [expandListMediaQuerySize]="expandListMediaQuerySize"
                     (clicked)="onServerClicked($event)"
                     class="select-none border-b"
                 >

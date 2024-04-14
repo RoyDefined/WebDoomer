@@ -5,6 +5,7 @@ import { StopPropagationDirective } from '../../directives/stop-propagation-dire
 import { ToolTipDirective } from '../../directives/tooltip-directive';
 import { isMobile } from '../../utils/isMobile';
 import { isWindows } from '../../utils/isWindows';
+import { MediaQuerySize } from '../../utils/media-query-size';
 
 @Component({
     standalone: true,
@@ -15,6 +16,7 @@ import { isWindows } from '../../utils/isWindows';
 export class ListedServerComponent implements OnChanges {
     @Input({ required: true }) server!: Server;
     @Input({ required: true }) selected!: Boolean;
+    @Input({ required: true }) expandListMediaQuerySize!: MediaQuerySize;
     @Output() clicked = new EventEmitter<Server>();
 
     public get engineUrl() {
