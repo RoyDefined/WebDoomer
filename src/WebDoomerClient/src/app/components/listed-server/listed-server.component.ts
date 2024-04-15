@@ -45,8 +45,8 @@ export class ListedServerComponent implements OnChanges {
     }
 
     public get playerCountTitle() {
-        const botCount = this.server.botCount || 0;
-        const slots = this.server.maxClients || 0;
+        const botCount = this.server.botCount;
+        const slots = this.server.maxClients;
         let title = 'This server has ';
 
         if (this.clientCount == 0 && botCount == 0) {
@@ -62,13 +62,13 @@ export class ListedServerComponent implements OnChanges {
 
         title += ' and ';
 
-        if (botCount > 0) {
+        if (botCount && botCount > 0) {
             title += botCount + ' bot' + (botCount > 1 ? 's' : '');
         } else {
             title += 'no bots';
         }
 
-        if (slots) {
+        if (slots && slots > 0) {
             title += ' out of the available ' + slots + ' slot' + (slots > 1 ? 's' : '');
         }
 

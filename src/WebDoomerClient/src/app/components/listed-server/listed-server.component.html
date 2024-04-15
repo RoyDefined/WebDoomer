@@ -49,7 +49,10 @@
                 <div
                     class="block content-center text-sm font-bold group-[.expand-at-sm]:sm:hidden group-[.expand-at-md]:md:hidden group-[.expand-at-lg]:lg:hidden group-[.expand-at-xl]:xl:hidden group-[.expand-at-2xl]:2xl:hidden"
                 >
-                    {{ clientCount }}/{{ server.maxClients || 0 }}
+                    <span>{{ clientCount }}</span>
+                    @if (server.maxClients) {
+                        <span>/{{ server.maxClients }}</span>
+                    }
                 </div>
             }
         </div>
