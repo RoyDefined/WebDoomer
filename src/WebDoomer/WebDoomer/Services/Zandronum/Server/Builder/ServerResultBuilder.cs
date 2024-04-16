@@ -24,6 +24,9 @@ internal sealed class ServerResultBuilder
 	internal readonly IPEndPoint endPoint;
 	internal ServerQueryResponseType response;
 
+	internal int? time;
+	internal string? version;
+
 	internal string? name;
 	internal string? url;
 	internal string? email;
@@ -104,8 +107,8 @@ internal sealed class ServerResultBuilder
 			case ServerQueryResponseType.challenge:
 
 				// Time and version. Both unused.
-				_ = packet.GetInt();
-				_ = packet.GetString(true);
+				this.time = packet.GetInt();
+				this.version = packet.GetString(true);
 				return false;
 
 			case ServerQueryResponseType.segmentedChallenge:
@@ -121,8 +124,8 @@ internal sealed class ServerResultBuilder
 				if (segmentIndex == 0)
 				{
 					// Time and version. Both unused.
-					_ = packet.GetInt();
-					_ = packet.GetString(true);
+					this.time = packet.GetInt();
+					this.version = packet.GetString(true);
 				}
 
 				return @continue;

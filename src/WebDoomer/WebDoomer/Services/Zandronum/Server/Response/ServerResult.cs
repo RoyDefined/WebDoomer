@@ -17,6 +17,9 @@ public sealed class ServerResult
 	public required ServerQueryResponseType ServerChallengeResponse { get; init; }
 	public required ServerResultState State { get; init; }
 
+	public required int? Ping { get; init; }
+	public required string? Version { get; init; }
+
 	public required string? Name { get; init; }
 	public required string? Url { get; init; }
 	public required string? Email { get; init; }
@@ -163,8 +166,13 @@ public sealed class ServerResult
 			new ReadOnlyCollection<string>(builder.dehackedNameCollection) :
 			null;
 
+		// Not sure what to do with this yet.
+		var ping = builder.time;
+
 		return new ServerResult()
 		{
+			Ping = ping,
+			Version = builder.version,
 			EndPoint = builder.endPoint,
 			ServerChallengeResponse = builder.response,
 			State = serverResultState,

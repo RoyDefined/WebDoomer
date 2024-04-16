@@ -102,6 +102,9 @@ switch(commandOptions.FetchType)
 			logger.Information("Response: {Value}.", serverResult.ServerChallengeResponse);
 			logger.Information("State: {Value}.", serverResult.State);
 
+			logger.Information("Ping: {Value}.", serverResult.Ping);
+			logger.Information("Version: {Value}.", serverResult.Version);
+
 			logger.Information("Name: {Value}.", serverResult.Name);
 			logger.Information("Url: {Value}.", serverResult.Url);
 			logger.Information("Email: {Value}.", serverResult.Email);
