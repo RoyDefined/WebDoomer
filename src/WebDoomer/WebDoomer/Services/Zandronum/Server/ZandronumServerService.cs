@@ -131,9 +131,18 @@ internal class ZandronumServerService : IZandronumServerService
 			{
 				break;
 			}
-
-			var socketResult = await socketResultTask
-				.ConfigureAwait(false);
+			SocketReceiveFromResult socketResult;
+			try
+			{
+				socketResult = await socketResultTask
+					.ConfigureAwait(false);
+			}
+			catch (SocketException ex)
+			{
+				this._logger.LogError(ex, "Failed to read bytes from socket.");
+				continue;
+			}
+			
 			var data = bufferData.Take(socketResult.ReceivedBytes).ToArray();
 			var remoteEndpoint = (IPEndPoint)socketResult.RemoteEndPoint;
 			var receivePacket = new HuffmanPacket(data);
