@@ -118,12 +118,16 @@ public sealed class ServerResult
 
 		var playerEnumerable = builder.playerDataCollection?.Select(x =>
 		{
+			// Convert any instances of '\u001c' to '\c'.
+			// This is something Zandronum does so we have to convert it back.
+			var name = x.Name.Replace("\u001c", "\\c", StringComparison.OrdinalIgnoreCase);
+
 			// Make sure ping is valid. Also handle 0 as this covers bots.
 			short? ping = x.Ping <= 0 ? null : x.Ping;
 
 			return new Player()
 			{
-				Name = x.Name,
+				Name = name,
 				ScoreCount = x.ScoreCount,
 				Ping = ping,
 				IsSpectating = x.IsSpectating,
