@@ -6,7 +6,7 @@ using WebDoomer.Packets;
 
 namespace WebDoomer.Zandronum;
 
-internal class ZandronumMasterServerService : IZandronumMasterServerService
+internal class ZandronumMasterServerService : IZandronumMasterServerService, IDisposable
 {
 	/// <inheritdoc cref="ILogger"/>
 	protected readonly ILogger _logger;
