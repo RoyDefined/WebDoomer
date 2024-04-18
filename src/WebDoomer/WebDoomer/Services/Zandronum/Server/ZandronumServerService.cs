@@ -167,7 +167,7 @@ internal class ZandronumServerService : IZandronumServerService
 			// This should only ever error if data was returned from an unexpected endpoint.
 			if (!pendingBuilders.TryGetValue(remoteEndpoint, out var builder))
 			{
-				this._logger.LogError("Could not find builder for {EndPoint}.", remoteEndpoint);
+				this._logger.LogWarning("Could not find builder for {EndPoint}.", remoteEndpoint);
 				continue;
 			}
 
