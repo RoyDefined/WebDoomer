@@ -15,8 +15,11 @@ internal class ZandronumServerService : IZandronumServerService
 	protected readonly ILogger _logger;
 
 	// TODO: Make these variables configurable.
-	private readonly int _endPointsPerBuffer = 50;
+	private readonly int _endPointsPerBuffer = 100;
 	private readonly int _maximumPacketSize = 5000;
+	private readonly int _socketSendBufferSize = 10000;
+	private readonly int _socketReceiveBufferSize = 1000000000;
+	private readonly TimeSpan _sendDelay = TimeSpan.FromMilliseconds(100);
 	private readonly TimeSpan _fetchTaskTimeout = TimeSpan.FromSeconds(15);
 
 	public ZandronumServerService(
@@ -69,12 +72,21 @@ internal class ZandronumServerService : IZandronumServerService
 		}
 
 		this._logger.LogInformation("Start fetching server data. Total sockets: {SocketCount}. Flag set 0: ({Flagset0Int}){Flagset0}, flag set 1: ({Flagset1Int}){Flagset1}.", buffers.Count, (uint)flagset0, flagset0, (uint)flagset1, flagset1);
+		this._logger.LogDebug("Socket send buffer size: {SocketSendBufferSize}. Socket receive buffer size: {SocketReceiveBufferSize} Endpoints per buffer: {EndPointsPerBuffer}.", this._socketSendBufferSize, this._socketReceiveBufferSize, this._endPointsPerBuffer);
 
+		// The packet to send to all servers.
+		var packet = new HuffmanPacket(sizeof(int) * 4 + sizeof(byte))
+			.Write(protocolType, flagset0, flagset1);
+
+		var stopwatch = Stopwatch.StartNew();
 		var bag = new ConcurrentBag<ServerResult>();
 		var parallelTask = Parallel.ForEachAsync(buffers, cancellationToken, async (buffer, _) =>
 		{
 			using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-			var resultEnumerable = this.GetServersDataAsync(buffer, socket, protocolType, flagset0, flagset1, cancellationToken);
+			socket.SendBufferSize = this._socketSendBufferSize;
+			socket.ReceiveBufferSize = this._socketReceiveBufferSize;
+
+			var resultEnumerable = this.GetServersDataAsync(buffer, packet, socket, stopwatch, cancellationToken);
 			await foreach(var result in resultEnumerable)
 			{
 				bag.Add(result);
@@ -94,16 +106,17 @@ internal class ZandronumServerService : IZandronumServerService
 		}
 
 		await parallelTask.ConfigureAwait(false);
+		this._logger.LogInformation("Full fetch finished after {StopwatchMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
 	}
 
-	private async IAsyncEnumerable<ServerResult> GetServersDataAsync(IPEndPoint[] endPoints, Socket socket, LauncherProtocolType protocolType, ServerQueryDataFlagset0 flagset0, ServerQueryDataFlagset1 flagset1, [EnumeratorCancellation] CancellationToken cancellationToken)
+	private async IAsyncEnumerable<ServerResult> GetServersDataAsync(IPEndPoint[] endPoints, Packet sendPacket, Socket socket, Stopwatch stopwatch, [EnumeratorCancellation] CancellationToken cancellationToken)
 	{
-		var packet = new HuffmanPacket(sizeof(int) * 4 + sizeof(byte))
-			.Write(protocolType, flagset0, flagset1);
-
 		foreach (var endPoint in endPoints)
 		{
-			socket.SendTo(packet, endPoint);
+			socket.SendTo(sendPacket, endPoint);
+
+			await Task.Delay(this._sendDelay, cancellationToken)
+				.ConfigureAwait(false);
 		}
 
 		// This is the main dictionary that holds the builders to eventually return the results from.
@@ -139,7 +152,8 @@ internal class ZandronumServerService : IZandronumServerService
 			}
 			catch (SocketException ex)
 			{
-				this._logger.LogError(ex, "Failed to read bytes from socket.");
+				this._logger.LogWarning(ex, "Failed to read bytes from socket. Response packet was likely too large.");
+				this._logger.LogWarning("SocketException: {Message}", ex.Message);
 				continue;
 			}
 			
@@ -203,5 +217,7 @@ internal class ZandronumServerService : IZandronumServerService
 
 			//this._logger.LogWarning("Unfinished or timed out endpoints: {EndPointsJoined}", pendingBuilders.Select(x => x.Value.endPoint));
 		}
+
+		this._logger.LogDebug("Batch fetch finished after {StopwatchMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
 	}
 }
