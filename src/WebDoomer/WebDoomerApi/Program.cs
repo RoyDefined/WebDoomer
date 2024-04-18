@@ -48,7 +48,7 @@ try
 
 	// Scheduler
 	_ = builder.Services.AddSingleton<ServerDataFetchJob>();
-	_ = builder.Services.AddServerDataProvider();
+	_ = builder.Services.AddServerDataProvider(builder.Configuration, "ApiOptions");
 	_ = builder.Services.AddScheduling();
 }
 catch (Exception ex)

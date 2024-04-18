@@ -13,6 +13,9 @@ public static class IServiceCollectionExtensions
 		IConfiguration configuration,
 		string section)
     {
+		ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+		ArgumentNullException.ThrowIfNull(section, nameof(section));
+
 		var configurationSection = configuration.GetSection(section);
 		if (!configurationSection.Exists())
 		{

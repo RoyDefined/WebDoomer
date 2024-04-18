@@ -1,21 +1,20 @@
-﻿using Sqids;
+﻿using Microsoft.Extensions.Options;
+using Sqids;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Net;
+using WebDoomer.QZandronum;
 using WebDoomer.Zandronum;
 
 namespace WebDoomerApi.Services;
 
-internal sealed class ConcurrentServerDataProvider : IServerDataProvider
+internal sealed class ConcurrentServerDataProvider : IServerDataProvider, IDisposable
 {
 	/// <inheritdoc cref="ILogger"/>
 	private readonly ILogger _logger;
 
 	/// <inheritdoc cref="SqidsEncoder{T}"/>
 	private readonly SqidsEncoder<uint> _encoder;
-
-	// TODO: Make this variable configurable.
-	private readonly int _minimumPendingServerPercentage = 50;
 
 	/// <summary>
 	/// Represents the concurrent dictionary containing all data related to a specific's engine servers.
@@ -44,10 +43,23 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 
 	private ReadOnlyCollection<ProvidedServer> Servers => this._servers.Value;
 
+	/// <summary>
+	/// The service's options.
+	/// </summary>
+	private ApiOptions _options;
+
+	/// <summary>
+	/// The service's option listener.
+	/// </summary>
+	private readonly IDisposable? _optionsMonitorListener;
+
 	public ConcurrentServerDataProvider(
-		ILogger<ConcurrentServerDataProvider> logger)
+		ILogger<ConcurrentServerDataProvider> logger,
+		IOptionsMonitor<ApiOptions> optionsMonitor)
 	{
 		this._logger = logger;
+		this._options = optionsMonitor.CurrentValue;
+		this._optionsMonitorListener = optionsMonitor.OnChange(this.OptionsMonitorOnChangeListener);
 
 		this._encoder = new();
 		this._data = new();
@@ -97,7 +109,7 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 		}
 
 		// Check if the pending dictionary should be switched to the actual dictionary.
-		var targetPendingServerCount = this._expectedCount[engineType] * ((float)this._minimumPendingServerPercentage / 100);
+		var targetPendingServerCount = this._expectedCount[engineType] * ((float)this._options.MinimumPendingServerPercentage / 100);
 		if (!this._writeToActual[engineType] && pendingDataDictionary.Count > targetPendingServerCount)
 		{
 			this._logger.LogDebug("Pending dictionary reached threshold of {Threshold} ({Actual}) for {EngineType}. Switching to actual data dictionary.", targetPendingServerCount, pendingDataDictionary.Count, engineType);
@@ -201,5 +213,17 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 				x.Value.Select(y => ProvidedServer.Create(y.Value, x.Key, this._encoder)));
 
 		return new(servers.ToArray());
+	}
+
+	private void OptionsMonitorOnChangeListener(ApiOptions options, string? _)
+	{
+		this._logger.LogDebug("Settings update observed.");
+		this._options = options;
+	}
+
+	/// <inheritdoc />
+	public void Dispose()
+	{
+		this._optionsMonitorListener?.Dispose();
 	}
 }
