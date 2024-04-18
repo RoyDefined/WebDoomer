@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Net;
 using WebDoomer.Zandronum;
 
@@ -7,8 +8,9 @@ namespace WebDoomer.QZandronum;
 internal sealed class QZandronumServerService : ZandronumServerService, IQZandronumServerService
 {
 	public QZandronumServerService(
-		ILogger<QZandronumServerService> logger)
-		: base(logger)
+		ILogger<QZandronumServerService> logger,
+		IOptionsMonitor<ServerFetchOptions> serverFetchOptionsMonitor)
+		: base(logger, serverFetchOptionsMonitor)
 	{
 	}
 

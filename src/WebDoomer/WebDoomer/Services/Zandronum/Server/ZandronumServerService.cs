@@ -6,26 +6,32 @@ using System.Linq;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Options;
 
 namespace WebDoomer.Zandronum;
 
-internal class ZandronumServerService : IZandronumServerService
+internal class ZandronumServerService : IZandronumServerService, IDisposable
 {
 	/// <inheritdoc cref="ILogger"/>
 	protected readonly ILogger _logger;
 
-	// TODO: Make these variables configurable.
-	private readonly int _endPointsPerBuffer = 100;
-	private readonly int _maximumPacketSize = 5000;
-	private readonly int _socketSendBufferSize = 10000;
-	private readonly int _socketReceiveBufferSize = 1000000000;
-	private readonly TimeSpan _sendDelay = TimeSpan.FromMilliseconds(100);
-	private readonly TimeSpan _fetchTaskTimeout = TimeSpan.FromSeconds(15);
+	/// <summary>
+	/// The service's options.
+	/// </summary>
+	private ServerFetchOptions _serverFetchOptions;
+
+	/// <summary>
+	/// The service's option listener.
+	/// </summary>
+	private readonly IDisposable? _serverFetchOptionsOnChangeListenerDisposable;
 
 	public ZandronumServerService(
-		ILogger<ZandronumServerService> logger)
+		ILogger<ZandronumServerService> logger,
+		IOptionsMonitor<ServerFetchOptions> serverFetchOptionsMonitor)
 	{
 		this._logger = logger;
+		this._serverFetchOptions = serverFetchOptionsMonitor.CurrentValue;
+		this._serverFetchOptionsOnChangeListenerDisposable = serverFetchOptionsMonitor.OnChange(this.ServerFetchOptionsOnChangeListener);
 	}
 
 	/// <inheritdoc />
@@ -66,13 +72,13 @@ internal class ZandronumServerService : IZandronumServerService
 		// Divide endpoints over a number of sockets.
 		var buffers = new List<IPEndPoint[]>();
 
-		for (var i = 0; i < endPoints.Length; i += this._endPointsPerBuffer)
+		for (var i = 0; i < endPoints.Length; i += this._serverFetchOptions.EndPointsPerBuffer)
 		{
-			buffers.Add(endPoints.Skip(i).Take(this._endPointsPerBuffer).ToArray());
+			buffers.Add(endPoints.Skip(i).Take(this._serverFetchOptions.EndPointsPerBuffer).ToArray());
 		}
 
 		this._logger.LogInformation("Start fetching server data. Total sockets: {SocketCount}. Flag set 0: ({Flagset0Int}){Flagset0}, flag set 1: ({Flagset1Int}){Flagset1}.", buffers.Count, (uint)flagset0, flagset0, (uint)flagset1, flagset1);
-		this._logger.LogDebug("Socket send buffer size: {SocketSendBufferSize}. Socket receive buffer size: {SocketReceiveBufferSize} Endpoints per buffer: {EndPointsPerBuffer}.", this._socketSendBufferSize, this._socketReceiveBufferSize, this._endPointsPerBuffer);
+		this._logger.LogDebug("Socket send buffer size: {SocketSendBufferSize}. Socket receive buffer size: {SocketReceiveBufferSize} Endpoints per buffer: {EndPointsPerBuffer}.", this._serverFetchOptions.SocketSendBufferSize, this._serverFetchOptions.SocketReceiveBufferSize, this._serverFetchOptions.EndPointsPerBuffer);
 
 		// The packet to send to all servers.
 		var packet = new HuffmanPacket(sizeof(int) * 4 + sizeof(byte))
@@ -83,8 +89,8 @@ internal class ZandronumServerService : IZandronumServerService
 		var parallelTask = Parallel.ForEachAsync(buffers, cancellationToken, async (buffer, _) =>
 		{
 			using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-			socket.SendBufferSize = this._socketSendBufferSize;
-			socket.ReceiveBufferSize = this._socketReceiveBufferSize;
+			socket.SendBufferSize = this._serverFetchOptions.SocketSendBufferSize;
+			socket.ReceiveBufferSize = this._serverFetchOptions.SocketReceiveBufferSize;
 
 			var resultEnumerable = this.GetServersDataAsync(buffer, packet, socket, stopwatch, cancellationToken);
 			await foreach(var result in resultEnumerable)
@@ -115,7 +121,7 @@ internal class ZandronumServerService : IZandronumServerService
 		{
 			socket.SendTo(sendPacket, endPoint);
 
-			await Task.Delay(this._sendDelay, cancellationToken)
+			await Task.Delay(this._serverFetchOptions.SendDelayMilliseconds, cancellationToken)
 				.ConfigureAwait(false);
 		}
 
@@ -124,12 +130,12 @@ internal class ZandronumServerService : IZandronumServerService
 		var pendingBuilders = new Dictionary<IPEndPoint, ServerResultBuilder>(endPoints.Select(x => new KeyValuePair<IPEndPoint, ServerResultBuilder>(x, new(x))));
 
 		// Main timeout indicates up to how long this task can run.
-		var timeoutTask = Task.Delay(this._fetchTaskTimeout, CancellationToken.None);
+		var timeoutTask = Task.Delay(this._serverFetchOptions.FetchTaskTimeoutMilliseconds, CancellationToken.None);
 
 		while (pendingBuilders.Count > 0)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			var bufferData = new byte[this._maximumPacketSize];
+			var bufferData = new byte[this._serverFetchOptions.MaximumPacketSize];
 
 			// Listen for any endpoint rather than a specific one.
 			var endPointAny = new IPEndPoint(IPAddress.Any, 0);
@@ -219,5 +225,17 @@ internal class ZandronumServerService : IZandronumServerService
 		}
 
 		this._logger.LogDebug("Batch fetch finished after {StopwatchMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
+	}
+
+	private void ServerFetchOptionsOnChangeListener(ServerFetchOptions options, string? _)
+	{
+		this._logger.LogDebug("Settings update observed.");
+		this._serverFetchOptions = options;
+	}
+
+	/// <inheritdoc />
+	public void Dispose()
+	{
+		this._serverFetchOptionsOnChangeListenerDisposable?.Dispose();
 	}
 }

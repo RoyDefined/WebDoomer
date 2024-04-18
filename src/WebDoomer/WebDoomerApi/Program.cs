@@ -41,7 +41,7 @@ try
 #endif
 
 	// WebDoomer
-	_ = builder.Services.AddWebDoomer();
+	_ = builder.Services.AddWebDoomer(builder.Configuration, "ServerFetchOptions");
 
 	// Rate limiting
 	_ = builder.Services.AddResponseSizeRateLimiting();
