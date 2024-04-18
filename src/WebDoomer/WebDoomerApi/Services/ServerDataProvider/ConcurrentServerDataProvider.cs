@@ -112,7 +112,7 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider, IDispo
 		var targetPendingServerCount = this._expectedCount[engineType] * ((float)this._options.MinimumPendingServerPercentage / 100);
 		if (!this._writeToActual[engineType] && pendingDataDictionary.Count > targetPendingServerCount)
 		{
-			this._logger.LogDebug("Pending dictionary reached threshold of {Threshold} ({Actual}) for {EngineType}. Switching to actual data dictionary.", targetPendingServerCount, pendingDataDictionary.Count, engineType);
+			this._logger.LogDebug("Pending dictionary reached threshold, {MinimumPercentage}% of {ExpectedCount} ({Actual}) for {EngineType}. Switching to actual data dictionary.", this._options.MinimumPendingServerPercentage, this._expectedCount[engineType], pendingDataDictionary.Count, engineType);
 
 			this._writeToActual[engineType] = true;
 			this._data[engineType] = this._pendingData[engineType];
