@@ -33,7 +33,22 @@ public interface IServerDataProvider
 	/// <returns>An <see cref="IEnumerable{T}"/> of <see cref="string"/> representing the id of a server.</returns>
 	IEnumerable<string> GetServerIds(OrderByType orderBy);
 
+	/// <summary>
+	/// Indicates the start of a new stream of data for the given <paramref name="engineType"/>
+	/// </summary>
+	/// <param name="engineType">The engine type that will have its data added.</param>
 	internal void StartSetData(EngineType engineType);
+
+	/// <summary>
+	/// Adds the given <paramref name="serverResult"/> to the collection of the given <paramref name="engineType"/>.
+	/// </summary>
+	/// <param name="engineType">The engine type under which to add the data.</param>
+	/// <param name="serverResult">The result to add to the engine.</param>
 	internal void AddData(EngineType engineType, ServerResult serverResult);
+
+	/// <summary>
+	/// Indicates the end of the stream of data for the given <paramref name="engineType"/> and the start of the finalization.
+	/// </summary>
+	/// <param name="engineType">The engine type that has all its data added.</param>
 	internal void EndSetData(EngineType engineType);
 }
