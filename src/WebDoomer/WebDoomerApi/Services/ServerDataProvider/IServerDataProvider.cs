@@ -37,7 +37,8 @@ public interface IServerDataProvider
 	/// Indicates the start of a new stream of data for the given <paramref name="engineType"/>
 	/// </summary>
 	/// <param name="engineType">The engine type that will have its data added.</param>
-	internal void StartSetData(EngineType engineType);
+	/// <param name="expectedCount">Indicates the expected number of servers to arrive. Used to transfer pending data over to actual data.</param>
+	internal void StartSetData(EngineType engineType, int expectedCount);
 
 	/// <summary>
 	/// Adds the given <paramref name="serverResult"/> to the collection of the given <paramref name="engineType"/>.

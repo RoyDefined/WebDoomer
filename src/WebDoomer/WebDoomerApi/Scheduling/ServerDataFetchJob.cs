@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -5,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using WebDoomer.QZandronum;
 using WebDoomer.Zandronum;
 using WebDoomerApi.Scheduling;
@@ -53,12 +55,15 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 	{
 		this._logger.LogDebug("Server data fetch job invoked.");
 
-		var zandronumServerEnumerable = this.DoInvokeForEngineAsync(this._zandronumMasterServerService, this._zandronumServerService, "master.zandronum.com", 15300, cancellationToken);
-		var qZandronumServerEnumerable = this.DoInvokeForEngineAsync(this._qZandronumMasterServerService, this._qZandronumServerService, "master.qzandronum.com", 15300, cancellationToken);
+		var zandronunEndPoints = await this.FetchEndpointsAsync(this._zandronumMasterServerService, "master.zandronum.com", 15300, cancellationToken);
+		var qZandronunEndPoints = await this.FetchEndpointsAsync(this._qZandronumMasterServerService, "master.qzandronum.com", 15300, cancellationToken);
+
+		var zandronumServerEnumerable = this._zandronumServerService.GetServersDataAsync(zandronunEndPoints, LauncherProtocolType.OldProtocolSegmented, ServerQueryDataFlagset0.all, ServerQueryDataFlagset1.all, cancellationToken);
+		var qZandronumServerEnumerable = this._qZandronumServerService.GetServersDataAsync(qZandronunEndPoints, LauncherProtocolType.OldProtocolSegmented, ServerQueryDataFlagset0.all, ServerQueryDataFlagset1.all, cancellationToken);
 
 		// Delegate to a function that awaits the result and stores the result in the provider.
-		var zandronumServerFetchTask = this.AwaitFetchAndSave(zandronumServerEnumerable, EngineType.Zandronum);
-		var qZandronumServerFetchTask = this.AwaitFetchAndSave(qZandronumServerEnumerable, EngineType.QZandronum);
+		var zandronumServerFetchTask = this.AwaitFetchAndSave(zandronumServerEnumerable, EngineType.Zandronum, zandronunEndPoints.Length, cancellationToken);
+		var qZandronumServerFetchTask = this.AwaitFetchAndSave(qZandronumServerEnumerable, EngineType.QZandronum, qZandronunEndPoints.Length, cancellationToken);
 
 		// Await the tasks so the job gracefully ends and allows the scheduler to correctly set the next invoke.
 		var task = Task.WhenAll([zandronumServerFetchTask, qZandronumServerFetchTask]);
@@ -67,41 +72,34 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 		this._logger.LogDebug("Server data fetch job finished.");
 	}
 
-	// This is the main invoke of the job, using the services required.
-	// The services can be Zandronum or QZandronum. QZandronum inherits from Zandronum as it's basically the same.
-	private async IAsyncEnumerable<ServerResult> DoInvokeForEngineAsync(IZandronumMasterServerService masterServerService, IZandronumServerService serverService, string address, int port, [EnumeratorCancellation] CancellationToken cancellationToken)
+	private async Task<IPEndPoint[]> FetchEndpointsAsync(IZandronumMasterServerService masterServerService, string address, int port, CancellationToken cancellationToken)
 	{
-		this._logger.LogInformation("Result servers from master server {Address}:{Port}.", address, port);
+		this._logger.LogInformation("Fetching servers from master server {Address}:{Port}.", address, port);
 		var masterResult = await masterServerService.GetMasterServerHostsAsync(address, port, cancellationToken);
 
 		// No result
 		if (masterResult.ServerChallengeResponse != ServerChallengeResponseType.beginServerListPart)
 		{
 			this._logger.LogWarning("Master server {Address}:{Port} returned non-positive response.", address, port);
-			yield break;
+			return Array.Empty<IPEndPoint>();
 		}
 
 		var endPoints = masterResult.Hosts
 			.SelectMany(x => x.Ports.Select(y => new IPEndPoint(x.Address, y)))
 			.ToArray();
 
-		this._logger.LogInformation("Start fetching from {Address}:{Port}. Total endpoints: {EndPoints}.", address, port, endPoints.Length);
-		var resultsEnumerable = serverService.GetServersDataAsync(endPoints, LauncherProtocolType.OldProtocolSegmented, ServerQueryDataFlagset0.all, ServerQueryDataFlagset1.all, cancellationToken);
-
-		await foreach (var result in resultsEnumerable)
-		{
-			yield return result;
-		}
+		return endPoints;
 	}
 
-	private async Task AwaitFetchAndSave(IAsyncEnumerable<ServerResult> asyncEnumerable, EngineType engineType)
+	private async Task AwaitFetchAndSave(IAsyncEnumerable<ServerResult> asyncEnumerable, EngineType engineType, int expectedServerCount, CancellationToken cancellationToken)
 	{
-		this._serverDataProvider.StartSetData(engineType);
+		this._serverDataProvider.StartSetData(engineType, expectedServerCount);
 
 		try
 		{
 			await foreach(var serverResult in asyncEnumerable)
 			{
+				cancellationToken.ThrowIfCancellationRequested();
 				this._serverDataProvider.AddData(engineType, serverResult);
 			}
 		}

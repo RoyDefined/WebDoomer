@@ -6,7 +6,6 @@ using WebDoomer.Zandronum;
 
 namespace WebDoomerApi.Services;
 
-// TODO: The pending data should copy itself over to the main data once enough servers exist for a given engine.
 internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 {
 	/// <inheritdoc cref="ILogger"/>
@@ -15,15 +14,28 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 	/// <inheritdoc cref="SqidsEncoder{T}"/>
 	private readonly SqidsEncoder<uint> _encoder;
 
+	// TODO: Make this variable configurable.
+	private readonly int _minimumPendingServerPercentage = 50;
+
 	/// <summary>
 	/// Represents the concurrent dictionary containing all data related to a specific's engine servers.
 	/// </summary>
 	private readonly ConcurrentDictionary<EngineType, ConcurrentDictionary<IPEndPoint, ServerResult>> _data;
 
 	/// <summary>
-	/// Represents the concurrent dictionary containing pending data that will replace <see cref="_data"/> once all servers were fetched.
+	/// Represents the concurrent dictionary containing pending data that will replace <see cref="_data"/> once enough servers have been added.
 	/// </summary>
 	private readonly ConcurrentDictionary<EngineType, ConcurrentDictionary<IPEndPoint, ServerResult>> _pendingData;
+
+	/// <summary>
+	/// Represents the expected number of servers to arrive for the engine.
+	/// </summary>
+	private readonly ConcurrentDictionary<EngineType, int> _expectedCount;
+
+	/// <summary>
+	/// Indicates per engine if the data should be written to the actual data dictionary.
+	/// </summary>
+	private readonly ConcurrentDictionary<EngineType, bool> _writeToActual;
 
 	/// <summary>
 	/// Represents a lazy loaded collection of servers.
@@ -40,23 +52,65 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 		this._encoder = new();
 		this._data = new();
 		this._pendingData = new();
+		this._expectedCount = new();
+		this._writeToActual = new();
 		this._servers = new(this.LazyGetServers);
 	}
 
 	/// <inheritdoc />
-	void IServerDataProvider.StartSetData(EngineType engineType)
+	void IServerDataProvider.StartSetData(EngineType engineType, int expectedCount)
 	{
+		if (this._expectedCount.ContainsKey(engineType))
+		{
+			this._logger.LogWarning("Tried starting new data set for {Engine} even though an existing start already exists.", engineType);
+			return;
+		}
+
 		_ = this._pendingData.Remove(engineType, out _);
+		this._expectedCount[engineType] = expectedCount;
+		this._writeToActual[engineType] = false;
+
+		this._logger.LogWarning("Start new data set for {EngineType}. Expected server count: {ExpectedCount}.", engineType, expectedCount);
 	}
 
 	/// <inheritdoc />
 	void IServerDataProvider.AddData(EngineType engineType, ServerResult serverResult)
 	{
-		var dictionary = this._pendingData.TryGetValue(engineType, out var outDictionary) ?
-			outDictionary :
+		var dataDictionary = this._data.TryGetValue(engineType, out var outDataDictionary) ?
+			outDataDictionary :
 			new();
 
-		_ = this._pendingData.TryAdd(engineType, dictionary);
+		var pendingDataDictionary = this._pendingData.TryGetValue(engineType, out var outPendingDataDictionary) ?
+			outPendingDataDictionary :
+			new();
+
+		_ = this._data.TryAdd(engineType, dataDictionary);
+		_ = this._pendingData.TryAdd(engineType, pendingDataDictionary);
+
+		// Check actual data.
+		// If none exists we should immediatley write to the actual data.
+		if (!this._writeToActual[engineType] && dataDictionary.IsEmpty)
+		{
+			this._logger.LogDebug("Actual data dictionary of {EngineType} is empty. Switching to fill.", engineType);
+
+			this._writeToActual[engineType] = true;
+		}
+
+		// Check if the pending dictionary should be switched to the actual dictionary.
+		var targetPendingServerCount = this._expectedCount[engineType] * ((float)this._minimumPendingServerPercentage / 100);
+		if (!this._writeToActual[engineType] && pendingDataDictionary.Count > targetPendingServerCount)
+		{
+			this._logger.LogDebug("Pending dictionary reached threshold of {Threshold} ({Actual}) for {EngineType}. Switching to actual data dictionary.", targetPendingServerCount, pendingDataDictionary.Count, engineType);
+
+			this._writeToActual[engineType] = true;
+			this._data[engineType] = this._pendingData[engineType];
+			this._pendingData[engineType] = new();
+		}
+
+		// Get the dictionary 
+		var dictionary = this._writeToActual[engineType] ?
+			dataDictionary :
+			pendingDataDictionary;
 
 		if (dictionary.ContainsKey(serverResult.EndPoint))
 		{
@@ -65,24 +119,24 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 		}
 
 		_ = dictionary.TryAdd(serverResult.EndPoint, serverResult);
-	}
-
-	/// <inheritdoc />
-	void IServerDataProvider.EndSetData(EngineType engineType)
-	{
-		if (!this._pendingData.TryGetValue(engineType, out var servers))
-		{
-			this._logger.LogError("Failed to copy server results over from pending data to actual data for {Engine}.", engineType);
-			return;
-		}
-
-		_ = this._data.Remove(engineType, out _);
-		_ = this._data.TryAdd(engineType, servers);
 
 		// Reset lazy loaded servers.
 		if (this._servers.IsValueCreated)
 		{
 			this._servers = new(this.LazyGetServers);
+		}
+	}
+
+	/// <inheritdoc />
+	void IServerDataProvider.EndSetData(EngineType engineType)
+	{
+		_ = this._expectedCount.Remove(engineType, out _);
+		_ = this._writeToActual.Remove(engineType, out _);
+
+		if (!this._pendingData[engineType].IsEmpty)
+		{
+			this._logger.LogWarning("Pending server dictionary of {EngineType} is not empty.", engineType);
+			this._pendingData[engineType].Clear();
 		}
 
 		var completeCount = this._data[engineType].Count(x => x.Value.State == ServerResultState.Success);
