@@ -18,12 +18,12 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 	/// <summary>
 	/// Represents the concurrent dictionary containing all data related to a specific's engine servers.
 	/// </summary>
-	private readonly ConcurrentDictionary<EngineType, ConcurrentBag<ServerResult>> _data;
+	private readonly ConcurrentDictionary<EngineType, ConcurrentDictionary<IPEndPoint, ServerResult>> _data;
 
 	/// <summary>
 	/// Represents the concurrent dictionary containing pending data that will replace <see cref="_data"/> once all servers were fetched.
 	/// </summary>
-	private readonly ConcurrentDictionary<EngineType, ConcurrentBag<ServerResult>> _pendingData;
+	private readonly ConcurrentDictionary<EngineType, ConcurrentDictionary<IPEndPoint, ServerResult>> _pendingData;
 
 	/// <summary>
 	/// Represents a lazy loaded collection of servers.
@@ -52,13 +52,19 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 	/// <inheritdoc />
 	void IServerDataProvider.AddData(EngineType engineType, ServerResult serverResult)
 	{
-		var bag = this._pendingData.TryGetValue(engineType, out var outBag) ?
-			outBag :
+		var dictionary = this._pendingData.TryGetValue(engineType, out var outDictionary) ?
+			outDictionary :
 			new();
 
-		_ = this._pendingData.TryAdd(engineType, bag);
+		_ = this._pendingData.TryAdd(engineType, dictionary);
 
-		bag.Add(serverResult);
+		if (dictionary.ContainsKey(serverResult.EndPoint))
+		{
+			this._logger.LogWarning("Concurrent dictionary already contains a result for endpoint {EndPoint}.", serverResult.EndPoint);
+			return;
+		}
+
+		_ = dictionary.TryAdd(serverResult.EndPoint, serverResult);
 	}
 
 	/// <inheritdoc />
@@ -79,9 +85,9 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 			this._servers = new(this.LazyGetServers);
 		}
 
-		var completeCount = this._data[engineType].Count(x => x.State == ServerResultState.Success);
-		var errorCount = this._data[engineType].Count(x => x.State == ServerResultState.Error);
-		var timeoutCount = this._data[engineType].Count(x => x.State == ServerResultState.TimeOut);
+		var completeCount = this._data[engineType].Count(x => x.Value.State == ServerResultState.Success);
+		var errorCount = this._data[engineType].Count(x => x.Value.State == ServerResultState.Error);
+		var timeoutCount = this._data[engineType].Count(x => x.Value.State == ServerResultState.TimeOut);
 		this._logger.LogInformation("Final collection for {Engine}: Complete count: {CompleteCount}. Error count: {ErrorCount}. Timeout count: {TimeoutCount}", engineType, completeCount, errorCount, timeoutCount);
 	}
 
@@ -138,7 +144,7 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider
 	{
 		var servers = this._data
 			.SelectMany(x =>
-				x.Value.Select(y => ProvidedServer.Create(y, x.Key, this._encoder)));
+				x.Value.Select(y => ProvidedServer.Create(y.Value, x.Key, this._encoder)));
 
 		return new(servers.ToArray());
 	}
