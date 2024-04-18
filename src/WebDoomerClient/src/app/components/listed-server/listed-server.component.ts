@@ -22,7 +22,7 @@ export class ListedServerComponent implements OnChanges {
     public get engineUrl() {
         let engine = this.server.engine;
 
-        // TODO: improve this check.
+        // TODO: improve this check with an actual enum.
         const engineFileName = engine === 0 ? 'zandronumsmall' : 'qzandronumsmall';
         const url = `assets/engines/${engineFileName}.png`;
         return url;

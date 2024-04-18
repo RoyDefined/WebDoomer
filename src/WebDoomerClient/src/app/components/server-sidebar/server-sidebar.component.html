@@ -67,7 +67,7 @@
                     <ul>
                         @for (player of server.playerDataCollection; track player.name) {
                             <li class="flex text-sm">
-                                <span class="grow">{{ player.name }}</span>
+                                <span class="grow" [innerHTML]="formatPlayerName(player.name)"></span>
                                 @if (player.ping) {
                                     <span>{{ player.ping }}ms</span>
                                 }

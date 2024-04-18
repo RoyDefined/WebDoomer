@@ -8,6 +8,7 @@ import { formatString } from '../../utils/stringUtils';
 import { isMobile } from '../../utils/isMobile';
 import { isWindows } from '../../utils/isWindows';
 import { CopyToClipboardDirective } from '../../directives/copy-to-clipboard-directive';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
     standalone: true,
@@ -19,6 +20,35 @@ export class ServerSidebarComponent {
     @Input({ required: true }) server!: Server;
     @Input({ required: true }) settings!: z.infer<typeof clientSettingsSchema>;
     @Output() collapse = new EventEmitter();
+
+    private readonly colorCodeMap: { [id: string]: string } = {
+        a: 'CC3333',
+        b: 'D2B48C',
+        c: 'CCCCCC',
+        d: '00CC00',
+        e: '996633',
+        f: 'FFCC00',
+        g: 'FF5566',
+        h: '9999FF',
+        i: 'FFAA00',
+        j: 'DFDFDF',
+        k: 'EEEE33',
+        //l: '',
+        m: '000000',
+        n: '33EEFF',
+        o: 'FFCC99',
+        p: 'D1D8A8',
+        q: '008C00',
+        r: '800000',
+        s: '663333',
+        t: '9966CC',
+        u: '808080',
+        v: '00DDDD',
+        w: '7C7C98',
+        x: 'D57604',
+        y: '506CFC',
+        z: '236773',
+    };
 
     private get baseEngineQuery() {
         const query: string[] = [];
@@ -83,7 +113,49 @@ export class ServerSidebarComponent {
         return isWindows();
     }
 
+    constructor(private readonly _sanitizer: DomSanitizer) {}
+
     public clickCollapse() {
         this.collapse.emit();
+    }
+
+    public formatPlayerName(name: string) {
+        let output = '';
+        let inTag = false;
+
+        // Remove instances of complex colors codes as these are not supported.
+        const filteredName = name.replace(/\\c\[[\d\w*]*\]/g, '');
+
+        for (let i = 0; i < filteredName.length; i++) {
+            if (filteredName[i] !== '\\' || filteredName[i + 1] != 'c') {
+                output += filteredName[i];
+                continue;
+            }
+
+            if (inTag) {
+                output += '</span>';
+                inTag = false;
+            }
+
+            i += 2;
+            const colorCode = filteredName[i];
+            if (colorCode == '-' || colorCode == '+' || colorCode == '*' || colorCode == '!') {
+                continue;
+            }
+
+            const mappedColor = this.colorCodeMap[colorCode];
+            if (!mappedColor) {
+                continue;
+            }
+
+            output += `<span style="color: #${mappedColor};">`;
+            inTag = true;
+        }
+
+        if (inTag) {
+            output += '</span>';
+        }
+
+        return this._sanitizer.bypassSecurityTrustHtml(output);
     }
 }
