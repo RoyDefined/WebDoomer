@@ -22,7 +22,7 @@ public static class IServiceCollectionExtensions
 		// Register Zandronum servers
 		_ = serviceCollection.AddSingleton<IZandronumMasterServerService, ZandronumMasterServerService>();
 		_ = serviceCollection.AddSingleton<IZandronumServerService, ZandronumServerService>();
-		_ = serviceCollection.Configure<ServerFetchOptions>(configurationSection);
+		_ = serviceCollection.Configure<WebDoomerOptions>(configurationSection);
 
 		// Register QZandronum servers
 		_ = serviceCollection.AddSingleton<IQZandronumMasterServerService, QZandronumMasterServerService>();

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Sockets;
 using WebDoomer.Packets;
@@ -10,14 +11,23 @@ internal class ZandronumMasterServerService : IZandronumMasterServerService
 	/// <inheritdoc cref="ILogger"/>
 	protected readonly ILogger _logger;
 
-	// TODO: Make these variables configurable.
-	private readonly int _maximumPacketSize = 5000;
-	private readonly TimeSpan _fetchTaskTimeout = TimeSpan.FromSeconds(15);
+	/// <summary>
+	/// The service's options.
+	/// </summary>
+	private WebDoomerOptions _options;
+
+	/// <summary>
+	/// The service's option listener.
+	/// </summary>
+	private readonly IDisposable? _optionsMonitorListener;
 
 	public ZandronumMasterServerService(
-		ILogger<ZandronumMasterServerService> logger)
+		ILogger<ZandronumMasterServerService> logger,
+		IOptionsMonitor<WebDoomerOptions> optionsMonitor)
 	{
 		this._logger = logger;
+		this._options = optionsMonitor.CurrentValue;
+		this._optionsMonitorListener = optionsMonitor.OnChange(this.OptionsMonitorOnChangeListener);
 	}
 
 	/// <inheritdoc />
@@ -67,14 +77,14 @@ internal class ZandronumMasterServerService : IZandronumMasterServerService
 			.Write(PacketData.MasterServerVersion);
 
 		socket.SendTo(packet, endPoint);
-		var timeoutTask = Task.Delay(this._fetchTaskTimeout, CancellationToken.None);
+		var timeoutTask = Task.Delay(this._options.MasterServer.FetchTaskTimeout, CancellationToken.None);
 
 		var builder = new MasterServerResultBuilder();
 		while (true)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
-			var bufferData = new byte[this._maximumPacketSize];
+			var bufferData = new byte[this._options.MasterServer.MaximumPacketSize];
 			var socketResultTask = socket.ReceiveFromAsync(bufferData, endPoint, cancellationToken).AsTask();
 
 			// Check if request timed out.
@@ -101,5 +111,17 @@ internal class ZandronumMasterServerService : IZandronumMasterServerService
 
 			return builder.Build(false);
 		}
+	}
+
+	private void OptionsMonitorOnChangeListener(WebDoomerOptions options, string? _)
+	{
+		this._logger.LogDebug("Settings update observed.");
+		this._options = options;
+	}
+
+	/// <inheritdoc />
+	public void Dispose()
+	{
+		this._optionsMonitorListener?.Dispose();
 	}
 }

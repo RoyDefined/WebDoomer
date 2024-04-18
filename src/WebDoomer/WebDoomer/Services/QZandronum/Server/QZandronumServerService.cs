@@ -9,7 +9,7 @@ internal sealed class QZandronumServerService : ZandronumServerService, IQZandro
 {
 	public QZandronumServerService(
 		ILogger<QZandronumServerService> logger,
-		IOptionsMonitor<ServerFetchOptions> serverFetchOptionsMonitor)
+		IOptionsMonitor<WebDoomerOptions> serverFetchOptionsMonitor)
 		: base(logger, serverFetchOptionsMonitor)
 	{
 	}

@@ -54,7 +54,7 @@ try
 	_ = services.AddLogging(builder => builder.AddSerilog(logger));
 
 	// WebDoomer
-	_ = services.AddWebDoomer(configuration, "ServerFetchOptions");
+	_ = services.AddWebDoomer(configuration, "WebDoomerOptions");
 
 	serviceProvider = services.BuildServiceProvider();
 }
