@@ -1,8 +1,8 @@
 <div class="flex h-10 items-center justify-end px-1">
     <button (click)="clickCollapse()" class="button highlight w-10" type="button">&LessLess;</button>
 </div>
-<div class="flex flex-col gap-2 px-1">
-    <h1 class="line-clamp-1 text-center font-bold">{{ server.name }}</h1>
+<div class="flex flex-col gap-2 text-nowrap px-1">
+    <h1 class="line-clamp-2 text-balance text-center font-bold">{{ server.name }}</h1>
 
     @if (server.state !== 'detailed') {
         <div class="mt-10 flex flex-col gap-10">
