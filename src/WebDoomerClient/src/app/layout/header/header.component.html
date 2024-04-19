@@ -75,7 +75,7 @@
         }
 
         <div class="flex gap-1">
-            <button (click)="searchEnabled = !searchEnabled" class="button">
+            <button (click)="searchEnabled = !searchEnabled" class="button" [ngClass]="{ 'bg-slate-200 dark:bg-gray-600': searchEnabled }">
                 <ng-container>
                     <ng-container *ngTemplateOutlet="searchIcon"></ng-container>
                 </ng-container>
