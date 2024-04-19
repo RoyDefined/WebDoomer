@@ -74,6 +74,20 @@ export class ServersComponent implements OnInit, AfterViewInit {
         return isWindows();
     }
 
+    public get shouldShowRegistryTip() {
+        return this.isWindows && !this.isMobile && !this.hideRegistryTip;
+    }
+
+    public get shouldShowConfigurationTip$() {
+        return this.settings$.pipe(
+            map((settings) => this.isWindows && !this.isMobile && !this.hasConfiguredSomething(settings) && !this.hidePersonalConfigurationTip),
+        );
+    }
+
+    public get shouldShowWindowsOnlyTip() {
+        return !this.isWindows && !this.isMobile && !this.hideWindowsOnlyTip;
+    }
+
     constructor(
         private readonly _serversStore: ServersStore,
         private readonly _clientSettingsStore: ClientSettingsStore,
