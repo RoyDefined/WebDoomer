@@ -49,20 +49,18 @@
 </ng-template>
 
 <nav class="flex min-h-14 bg-gray-100 p-3 pl-3 shadow dark:bg-gray-700">
-    <a class="default-text-color-highlight relative h-full w-16 cursor-pointer content-center pl-14 font-bold" [routerLink]="['/']">
-        <img ngSrc="assets/logo1.png" class="object-contain" fill priority />WebDoomer
-    </a>
-
-    <div class="flex flex-grow items-center">
-        <!-- Optional content -->
+    <div class="flex flex-grow">
+        <a class="default-text-color-highlight relative h-8 w-8 cursor-pointer content-center pl-14 font-bold" [routerLink]="['/']">
+            <img ngSrc="assets/logo1.png" class="object-contain" fill priority />WebDoomer
+        </a>
     </div>
-    <div class="flex flex-col-reverse items-end gap-1 sm:flex-row">
+    <div class="flex w-full flex-col-reverse items-end gap-1 sm:w-auto sm:flex-row">
         @if (searchEnabled) {
             <div class="group relative z-0 w-full">
                 <input
                     id="form-qzandronum-exe"
                     formControlName="qZandronumLocation"
-                    class="peer block w-60 appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-1 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
+                    class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-1 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 sm:w-60"
                     placeholder=""
                 />
                 <label
