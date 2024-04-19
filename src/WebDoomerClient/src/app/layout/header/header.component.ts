@@ -19,6 +19,9 @@ import { isWindows } from '../../utils/isWindows';
 export class HeaderComponent {
     public readonly settings$ = this._clientSettingsStore.settings$;
 
+    // Indicates the search box is enabled.
+    public searchEnabled = false;
+
     public get isMobile() {
         return isMobile();
     }

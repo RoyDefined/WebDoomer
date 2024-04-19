@@ -1,16 +1,19 @@
+<ng-template #searchIcon>
+    <svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 69.96 69.96" stroke="currentColor" stroke-width="0.1" class="h-6 w-6">
+        <g>
+            <g>
+                <path
+                    d="M66.829,51.329L56.593,41.093c1.479-3.56,2.248-7.387,2.248-11.282c0-16.222-13.198-29.42-29.421-29.42 C13.198,0.391,0,13.589,0,29.811c0,16.223,13.198,29.421,29.42,29.421c4.318,0,8.518-0.932,12.37-2.724l9.931,9.932 c2.019,2.019,4.701,3.13,7.556,3.13s5.539-1.112,7.557-3.132c2.016-2.015,3.127-4.698,3.127-7.553 C69.96,56.032,68.849,53.348,66.829,51.329z M62.588,62.198c-0.914,0.915-2.113,1.372-3.312,1.372s-2.397-0.457-3.313-1.372 L42.798,49.031c-3.794,2.646-8.403,4.201-13.378,4.201C16.485,53.232,6,42.746,6,29.811s10.485-23.42,23.42-23.42 s23.421,10.485,23.421,23.42c0,4.57-1.314,8.832-3.578,12.438l13.325,13.325C64.418,57.403,64.418,60.369,62.588,62.198z"
+                ></path>
+                <path
+                    d="M29.42,13.061c-9.235,0-16.749,7.514-16.749,16.75s7.514,16.75,16.749,16.75c9.236,0,16.75-7.514,16.75-16.75 S38.656,13.061,29.42,13.061z M29.42,40.561c-5.927,0-10.749-4.822-10.749-10.75s4.822-10.75,10.749-10.75 c5.928,0,10.75,4.822,10.75,10.75S35.348,40.561,29.42,40.561z"
+                ></path>
+            </g>
+        </g>
+    </svg>
+</ng-template>
 <ng-template #settingsIcon>
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="feather feather-settings"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6">
         <circle cx="12" cy="12" r="3"></circle>
         <path
             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
@@ -45,7 +48,7 @@
     </svg>
 </ng-template>
 
-<nav class="flex h-14 bg-gray-100 p-3 pl-3 shadow dark:bg-gray-700">
+<nav class="flex min-h-14 bg-gray-100 p-3 pl-3 shadow dark:bg-gray-700">
     <a class="default-text-color-highlight relative h-full w-16 cursor-pointer content-center pl-14 font-bold" [routerLink]="['/']">
         <img ngSrc="assets/logo1.png" class="object-contain" fill priority />WebDoomer
     </a>
@@ -53,27 +56,52 @@
     <div class="flex flex-grow items-center">
         <!-- Optional content -->
     </div>
-    <div class="flex gap-1">
-        @if (isWindows && !isMobile) {
-            <button (click)="openConfigureScheme()" class="button">
-                <ng-container>
-                    <ng-container *ngTemplateOutlet="settingsIcon"></ng-container>
-                </ng-container>
-            </button>
+    <div class="flex flex-col-reverse items-end gap-1 sm:flex-row">
+        @if (searchEnabled) {
+            <div class="group relative z-0 w-full">
+                <input
+                    id="form-qzandronum-exe"
+                    formControlName="qZandronumLocation"
+                    class="peer block w-60 appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-1 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
+                    placeholder=""
+                />
+                <label
+                    for="form-qzandronum-exe"
+                    class="absolute top-2 -z-10 line-clamp-1 origin-[0] -translate-y-5 scale-75 transform text-sm text-gray-500 transition-transform duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:start-0 peer-focus:-translate-y-5 peer-focus:scale-75 peer-focus:font-medium peer-focus:text-blue-600 dark:text-gray-400 peer-focus:dark:text-blue-500 rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4"
+                >
+                    Search
+                </label>
+            </div>
         }
 
-        @if (settings$ | async; as settings) {
-            <button (click)="toggleDarkMode(settings.darkModeType || 'System')" class="button">
-                <ng-container *ngIf="!settings.darkModeType || settings.darkModeType === 'System'">
-                    <ng-container *ngTemplateOutlet="desktopIcon"></ng-container>
-                </ng-container>
-                <ng-container *ngIf="settings.darkModeType === 'Light'">
-                    <ng-container *ngTemplateOutlet="sunIcon"></ng-container>
-                </ng-container>
-                <ng-container *ngIf="settings.darkModeType === 'Dark'">
-                    <ng-container *ngTemplateOutlet="moonIcon"></ng-container>
+        <div class="flex gap-1">
+            <button (click)="searchEnabled = !searchEnabled" class="button">
+                <ng-container>
+                    <ng-container *ngTemplateOutlet="searchIcon"></ng-container>
                 </ng-container>
             </button>
-        }
+
+            @if (isWindows && !isMobile) {
+                <button (click)="openConfigureScheme()" class="button">
+                    <ng-container>
+                        <ng-container *ngTemplateOutlet="settingsIcon"></ng-container>
+                    </ng-container>
+                </button>
+            }
+
+            @if (settings$ | async; as settings) {
+                <button (click)="toggleDarkMode(settings.darkModeType || 'System')" class="button">
+                    <ng-container *ngIf="!settings.darkModeType || settings.darkModeType === 'System'">
+                        <ng-container *ngTemplateOutlet="desktopIcon"></ng-container>
+                    </ng-container>
+                    <ng-container *ngIf="settings.darkModeType === 'Light'">
+                        <ng-container *ngTemplateOutlet="sunIcon"></ng-container>
+                    </ng-container>
+                    <ng-container *ngIf="settings.darkModeType === 'Dark'">
+                        <ng-container *ngTemplateOutlet="moonIcon"></ng-container>
+                    </ng-container>
+                </button>
+            }
+        </div>
     </div>
 </nav>
