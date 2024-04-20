@@ -7,4 +7,5 @@ import { Injectable, TemplateRef } from '@angular/core';
 export class HeaderRefService {
     public leftRef?: TemplateRef<unknown>;
     public rightRef?: TemplateRef<unknown>;
+    public bottomRef?: TemplateRef<unknown>;
 }

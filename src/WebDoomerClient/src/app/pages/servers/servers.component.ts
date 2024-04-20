@@ -20,6 +20,7 @@ import { clientSettingsSchema } from '../../stores/clientsettings/client-setting
 import { MediaQuerySize } from '../../utils/media-query-size';
 import { HeaderLeftComponent } from '../../services/header-ref/components/header-left.component';
 import { HeaderRightComponent } from '../../services/header-ref/components/header-right.component';
+import { HeaderBottomComponent } from '../../services/header-ref/components/header-bottom.component';
 
 @Component({
     standalone: true,
@@ -35,6 +36,7 @@ import { HeaderRightComponent } from '../../services/header-ref/components/heade
         ServerSidebarComponent,
         HeaderLeftComponent,
         HeaderRightComponent,
+        HeaderBottomComponent,
     ],
     providers: [ModalService],
 })
@@ -99,6 +101,10 @@ export class ServersComponent implements OnInit, AfterViewInit {
 
     public get shouldShowWindowsOnlyTip() {
         return !this.isWindows && !this.isMobile && !this.hideWindowsOnlyTip;
+    }
+
+    public get serverCount$() {
+        return this.vm$.pipe(map((vm) => vm.servers.length));
     }
 
     constructor(

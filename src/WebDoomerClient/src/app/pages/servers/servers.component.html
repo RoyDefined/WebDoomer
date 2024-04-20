@@ -13,13 +13,28 @@
     </svg>
 </ng-template>
 
-<app-header-left-content> Left side </app-header-left-content>
+<app-header-left-content>
+    @if (serverCount$ | async; as serverCount) {
+        @if (serverCount) {
+            <div class="content-center">{{ serverCount }} servers</div>
+        }
+    }
+</app-header-left-content>
 
-<!-- This whole thing is currently quite a big mess. I should look into improving it. -->
 <app-header-right-content>
-    <div class="relative flex gap-1" [ngClass]="{ 'mb-10 sm:mb-0': searchEnabled }">
-        @if (searchEnabled) {
-            <div class="group absolute left-[calc(-100vw+9rem)] top-8 z-0 w-[calc(100vw-2.5rem)] sm:relative sm:left-0 sm:top-0 sm:w-auto">
+    <div class="relative flex gap-1">
+        <button (click)="searchEnabled = !searchEnabled" class="button" [ngClass]="{ 'bg-slate-200 dark:bg-gray-600': searchEnabled }">
+            <ng-container>
+                <ng-container *ngTemplateOutlet="searchIcon"></ng-container>
+            </ng-container>
+        </button>
+    </div>
+</app-header-right-content>
+
+<app-header-bottom-content>
+    @if (searchEnabled) {
+        <div class="ml-4 flex sm:ml-0 sm:justify-end">
+            <div class="group relative z-0 w-full sm:w-auto">
                 <input
                     id="form-qzandronum-exe"
                     formControlName="qZandronumLocation"
@@ -33,15 +48,9 @@
                     Search
                 </label>
             </div>
-        }
-
-        <button (click)="searchEnabled = !searchEnabled" class="button" [ngClass]="{ 'bg-slate-200 dark:bg-gray-600': searchEnabled }">
-            <ng-container>
-                <ng-container *ngTemplateOutlet="searchIcon"></ng-container>
-            </ng-container>
-        </button>
-    </div>
-</app-header-right-content>
+        </div>
+    }
+</app-header-bottom-content>
 
 @if (shouldShowConfigurationTip$ | async; as shouldShowConfigurationTip) {
     @if (shouldShowRegistryTip || shouldShowConfigurationTip || shouldShowWindowsOnlyTip) {

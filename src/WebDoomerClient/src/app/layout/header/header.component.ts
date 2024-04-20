@@ -36,6 +36,10 @@ export class HeaderComponent {
         return this._headerRefService.rightRef;
     }
 
+    public get headerBottomRef() {
+        return this._headerRefService.bottomRef;
+    }
+
     constructor(
         private readonly _modalService: ModalService,
         private readonly _clientSettingsStore: ClientSettingsStore,
