@@ -52,52 +52,6 @@
     }
 </app-header-bottom-content>
 
-@if (shouldShowConfigurationTip$ | async; as shouldShowConfigurationTip) {
-    @if (shouldShowRegistryTip || shouldShowConfigurationTip || shouldShowWindowsOnlyTip) {
-        <div class="default-text-color-highlight flex flex-col gap-1 bg-gray-100 p-1 text-sm font-bold dark:bg-gray-700">
-            @if (shouldShowRegistryTip) {
-                <div
-                    class="ml-5 flex flex-col items-baseline justify-between border-l-4 border-l-gray-300 bg-gray-100 p-1 pl-3 dark:border-l-slate-800 dark:bg-gray-700 lg:flex-row lg:gap-5"
-                >
-                    <span class="text-balance">Joining a server through the web browser requires you to download Doomseeker and associate a url.</span>
-                    <span class="flex gap-1">
-                        <button (click)="openLearnMoreScheme()" class="button w-40">Learn more</button>
-                        <button (click)="hideRegistryTip = true" class="button w-20">Hide</button>
-                    </span>
-                </div>
-            }
-
-            <!-- Check if anything was configured. If so hide the message because it can be assumed the user can find the configuration. -->
-            @if (shouldShowConfigurationTip) {
-                <div
-                    class="ml-5 flex flex-col items-baseline justify-between border-l-4 border-l-gray-300 bg-gray-100 p-1 pl-3 dark:border-l-slate-800 dark:bg-gray-700 lg:flex-row lg:gap-5"
-                >
-                    <span class="text-balance">Consider configuring your settings to improve the shared data in this application.</span>
-                    <span class="flex gap-1">
-                        <button (click)="openConfigureScheme()" class="button w-32">Configure</button>
-                        <button (click)="hidePersonalConfigurationTip = true" class="button w-20">Hide</button>
-                    </span>
-                </div>
-            }
-
-            <!--
-                The user was detected to run a non Windows OS.
-                I chose not to include mobile devices here because it seems obvious this is not possible.
-            -->
-            @if (shouldShowWindowsOnlyTip) {
-                <div
-                    class="ml-5 flex flex-col items-baseline justify-between border-l-4 border-l-gray-300 bg-gray-100 p-1 pl-3 dark:border-l-slate-800 dark:bg-gray-700 lg:flex-row lg:gap-5"
-                >
-                    <span class="text-balance">Your OS was detected as not being Windows. Joining through the browser is only supported for Windows.</span>
-                    <span class="flex gap-1">
-                        <button (click)="hideWindowsOnlyTip = true" class="button w-20">Hide</button>
-                    </span>
-                </div>
-            }
-        </div>
-    }
-}
-
 @if (vm$ | async; as vm) {
     @if (vm.error) {
         <div class="text-warning bg-warning p-2 text-center font-medium">

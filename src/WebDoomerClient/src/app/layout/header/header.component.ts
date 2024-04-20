@@ -9,6 +9,9 @@ import { darkModeTypeSchema } from '../../stores/clientsettings/darkModeType';
 import { isMobile } from '../../utils/isMobile';
 import { isWindows } from '../../utils/isWindows';
 import { HeaderRefService } from '../../services/header-ref/header-ref.service';
+import { clientSettingsSchema } from '../../stores/clientsettings/client-settings-schema';
+import { LearnMoreSchemeComponent } from '../../components/learn-more-scheme/learn-more-scheme.component';
+import { map } from 'rxjs';
 
 @Component({
     standalone: true,
@@ -19,6 +22,31 @@ import { HeaderRefService } from '../../services/header-ref/header-ref.service';
 })
 export class HeaderComponent {
     public readonly settings$ = this._clientSettingsStore.settings$;
+
+    /** If `true`, hide the header informing the user to add an association to the specified url. */
+    public hideRegistryTip = false;
+
+    /** If `true`, hide the header informing the user to add personal configuration.
+     * This variable might be turned on by default should the user already have valid configuration.
+     */
+    public hidePersonalConfigurationTip = false;
+
+    /** If `true`, hide the header informing the user joining is only supported on Windows. */
+    public hideWindowsOnlyTip = false;
+
+    public get shouldShowRegistryTip() {
+        return this.isWindows && !this.isMobile && !this.hideRegistryTip;
+    }
+
+    public get shouldShowConfigurationTip$() {
+        return this.settings$.pipe(
+            map((settings) => this.isWindows && !this.isMobile && !this.hasConfiguredSomething(settings) && !this.hidePersonalConfigurationTip),
+        );
+    }
+
+    public get shouldShowWindowsOnlyTip() {
+        return !this.isWindows && !this.isMobile && !this.hideWindowsOnlyTip;
+    }
 
     public get isMobile() {
         return isMobile();
@@ -46,8 +74,22 @@ export class HeaderComponent {
         private readonly _headerRefService: HeaderRefService,
     ) {}
 
+    public openLearnMoreScheme() {
+        this._modalService.openModal(LearnMoreSchemeComponent);
+    }
+
     public openConfigureScheme() {
         this._modalService.openModal(ConfigureSchemeComponent);
+    }
+
+    public hasConfiguredSomething(settings: z.infer<typeof clientSettingsSchema>) {
+        return (
+            !!settings.doomseekerLocation ||
+            !!settings.iwadsLocation ||
+            !!settings.pwadsLocation ||
+            !!settings.qZandronumLocation ||
+            !!settings.zandronumLocation
+        );
     }
 
     /**

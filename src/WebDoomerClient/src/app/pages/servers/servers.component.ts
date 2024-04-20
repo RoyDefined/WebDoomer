@@ -49,18 +49,6 @@ export class ServersComponent implements OnInit, AfterViewInit {
     /** The server that is currently being focused for the sidebar.*/
     public selectedServer: Server | null = null;
 
-    /** If `true`, hide the header informing the user to add an association to the specified url. */
-    public hideRegistryTip = false;
-
-    /** If `true`, hide the header informing the user to add personal configuration.
-     * This variable might be turned on by default should the user already have valid configuration.
-     */
-    public hidePersonalConfigurationTip = false;
-
-    /** If `true`, hide the header informing the user joining is only supported on Windows.
-     */
-    public hideWindowsOnlyTip = false;
-
     /** Represents the base number of additional servers that is added to these requests.
      * This does not represent the actual number of servers being fetched.
      * The actual number is calculated after.
@@ -102,20 +90,6 @@ export class ServersComponent implements OnInit, AfterViewInit {
 
     public get isWindows() {
         return isWindows();
-    }
-
-    public get shouldShowRegistryTip() {
-        return this.isWindows && !this.isMobile && !this.hideRegistryTip;
-    }
-
-    public get shouldShowConfigurationTip$() {
-        return this.settings$.pipe(
-            map((settings) => this.isWindows && !this.isMobile && !this.hasConfiguredSomething(settings) && !this.hidePersonalConfigurationTip),
-        );
-    }
-
-    public get shouldShowWindowsOnlyTip() {
-        return !this.isWindows && !this.isMobile && !this.hideWindowsOnlyTip;
     }
 
     public get serverCount$() {
@@ -232,24 +206,6 @@ export class ServersComponent implements OnInit, AfterViewInit {
 
     public onSidebarCollapse() {
         this.selectedServer = null;
-    }
-
-    public openLearnMoreScheme() {
-        this._modalService.openModal(LearnMoreSchemeComponent);
-    }
-
-    public openConfigureScheme() {
-        this._modalService.openModal(ConfigureSchemeComponent);
-    }
-
-    public hasConfiguredSomething(settings: z.infer<typeof clientSettingsSchema>) {
-        return (
-            !!settings.doomseekerLocation ||
-            !!settings.iwadsLocation ||
-            !!settings.pwadsLocation ||
-            !!settings.qZandronumLocation ||
-            !!settings.zandronumLocation
-        );
     }
 
     public onSearchInputChange(event: Event) {
