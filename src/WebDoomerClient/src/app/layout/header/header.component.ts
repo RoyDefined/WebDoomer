@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { darkModeTypeSchema } from '../../stores/clientsettings/darkModeType';
 import { isMobile } from '../../utils/isMobile';
 import { isWindows } from '../../utils/isWindows';
+import { HeaderRefService } from '../../services/header-ref/header-ref.service';
 
 @Component({
     standalone: true,
@@ -30,9 +31,18 @@ export class HeaderComponent {
         return isWindows();
     }
 
+    public get headerLeftRef() {
+        return this._headerRefService.leftRef;
+    }
+
+    public get headerRightRef() {
+        return this._headerRefService.rightRef;
+    }
+
     constructor(
         private readonly _modalService: ModalService,
         private readonly _clientSettingsStore: ClientSettingsStore,
+        private readonly _headerRefService: HeaderRefService,
     ) {}
 
     public openConfigureScheme() {

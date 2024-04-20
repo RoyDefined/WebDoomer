@@ -18,6 +18,8 @@ import { isWindows } from '../../utils/isWindows';
 import { z } from 'zod';
 import { clientSettingsSchema } from '../../stores/clientsettings/client-settings-schema';
 import { MediaQuerySize } from '../../utils/media-query-size';
+import { HeaderLeftComponent } from '../../services/header-ref/components/header-left.component';
+import { HeaderRightComponent } from '../../services/header-ref/components/header-right.component';
 
 @Component({
     standalone: true,
@@ -25,7 +27,15 @@ import { MediaQuerySize } from '../../utils/media-query-size';
     host: {
         class: 'flex flex-col overflow-auto grow',
     },
-    imports: [CommonModule, ScrollingModule, ListedServerComponent, ListedServerSkeletonComponent, ServerSidebarComponent],
+    imports: [
+        CommonModule,
+        ScrollingModule,
+        ListedServerComponent,
+        ListedServerSkeletonComponent,
+        ServerSidebarComponent,
+        HeaderLeftComponent,
+        HeaderRightComponent,
+    ],
     providers: [ModalService],
 })
 export class ServersComponent implements OnInit, AfterViewInit {

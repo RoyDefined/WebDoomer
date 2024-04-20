@@ -53,6 +53,8 @@
         <a class="default-text-color-highlight relative h-8 w-8 cursor-pointer content-center pl-14 font-bold" [routerLink]="['/']">
             <img ngSrc="assets/logo1.png" class="object-contain" fill priority />WebDoomer
         </a>
+
+        <ng-template *ngIf="headerLeftRef" [ngTemplateOutlet]="headerLeftRef"> </ng-template>
     </div>
     <div class="flex w-full flex-col-reverse items-end gap-1 sm:w-auto sm:flex-row">
         @if (searchEnabled) {
@@ -73,6 +75,7 @@
         }
 
         <div class="flex gap-1">
+            <ng-template *ngIf="headerRightRef" [ngTemplateOutlet]="headerRightRef"> </ng-template>
             <button (click)="searchEnabled = !searchEnabled" class="button" [ngClass]="{ 'bg-slate-200 dark:bg-gray-600': searchEnabled }">
                 <ng-container>
                     <ng-container *ngTemplateOutlet="searchIcon"></ng-container>

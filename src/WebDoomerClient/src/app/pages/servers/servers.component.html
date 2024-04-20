@@ -1,3 +1,7 @@
+<app-header-left-content> Left side </app-header-left-content>
+
+<app-header-right-content> Right side </app-header-right-content>
+
 @if (shouldShowConfigurationTip$ | async; as shouldShowConfigurationTip) {
     @if (shouldShowRegistryTip || shouldShowConfigurationTip || shouldShowWindowsOnlyTip) {
         <div class="default-text-color-highlight flex flex-col gap-1 bg-gray-100 p-1 text-sm font-bold dark:bg-gray-700">
