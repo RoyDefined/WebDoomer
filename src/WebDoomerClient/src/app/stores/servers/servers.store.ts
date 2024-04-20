@@ -21,18 +21,6 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
     private readonly _loading$ = this.select((state) => state.loading);
     private readonly _error$ = this.select((state) => state.error);
 
-    /** Represents the base number of additional servers that is added to these requests.
-     * This does not represent the actual number of servers being fetched.
-     * The actual number is calculated after.
-     */
-    private readonly _serverAdditionalFetchAmount = 50;
-
-    /** Represents the minimum number of servers that must be fetched in order to trigger fetching.
-     * A number below this amount will not trigger fetching.
-     * This value is ignored if the start/end of a collection is reached, as no more servers come after.
-     */
-    private readonly _serverMinimumFetchAmount = 30;
-
     public readonly vm$ = this.select({
         servers: this._servers$,
         loading: this._loading$,
@@ -61,56 +49,12 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
         ),
     );
 
-    public readonly updateListedServersByRangeAndDirection = this.effect((data$: Observable<{ range: ListRange; direction: 'up' | 'down' }>) =>
-        data$.pipe(
+    public readonly updateListedServersByRange = this.effect((range$: Observable<ListRange>) =>
+        range$.pipe(
             combineLatestWith(this._servers$),
             concatMap((args) => {
-                const [data, servers] = [args[0], args[1]];
-                let range = data.range;
-                const direction = data.direction;
-
-                // The directions implement sort of the same system.
-                // For readability they have been split.
-                // Determine what index to start, and what index to end.
-                // One index is based on when the first fetchable index can be found.
-                // The other is the last index that might be fetched.
-                // After that a take is determined. If this take is too low the fetch won't happen.
-                if (direction === 'down') {
-                    const startIndex = servers.findIndex((server, index, _) => index >= range.start && !server.fetching && server.state === 'id');
-                    if (startIndex == -1) {
-                        return EMPTY;
-                    }
-
-                    const endIndex = Math.min(range.end + this._serverAdditionalFetchAmount, servers.length);
-                    var reachedEnd = endIndex == servers.length;
-
-                    range = { start: startIndex, end: endIndex };
-                    var take = range.end - range.start;
-                } else {
-                    const endIndex = servers.findLastIndex((server, index, _) => index <= range.end && !server.fetching && server.state === 'id');
-                    if (endIndex == -1) {
-                        return EMPTY;
-                    }
-
-                    const startIndex = Math.max(range.start - this._serverAdditionalFetchAmount, 0);
-                    var reachedEnd = startIndex == 0;
-
-                    range = { start: startIndex, end: endIndex + 1 };
-                    var take = range.end - range.start;
-                }
-
-                // Take must be a minimum unless we reached the end of the collection.
-                if (!reachedEnd && take < this._serverMinimumFetchAmount) {
-                    return EMPTY;
-                }
-
-                //console.log('Final fetch range', range);
-                //console.log('Take', take);
-
-                // The servers being fetched should indicate they are being fetched.
-                for (const server of servers.slice(range.start, range.end)) {
-                    server.fetching = true;
-                }
+                const [range, servers] = [args[0], args[1]];
+                const take = range.end - range.start;
 
                 return this._serversApiService.GetServersPaginated(range.start, take).pipe(
                     map((updatedServers) => {

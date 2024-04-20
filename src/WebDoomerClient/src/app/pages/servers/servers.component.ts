@@ -6,7 +6,7 @@ import { ServersStore } from '../../stores/servers/servers.store';
 import { ListedServerComponent } from '../../components/listed-server/listed-server.component';
 import { Server } from '../../models/server';
 import { ListRange } from '@angular/cdk/collections';
-import { Subject, Subscription, debounceTime, distinctUntilChanged, map, tap } from 'rxjs';
+import { Subject, Subscription, combineLatestWith, debounceTime, distinctUntilChanged, map, tap } from 'rxjs';
 import { ListedServerSkeletonComponent } from '../../components/listed-server-skeleton/listed-server-skeleton.component';
 import { ServerSidebarComponent } from '../../components/server-sidebar/server-sidebar.component';
 import { ModalService } from '../../services/modal/modal.service';
@@ -60,6 +60,18 @@ export class ServersComponent implements OnInit, AfterViewInit {
     /** If `true`, hide the header informing the user joining is only supported on Windows.
      */
     public hideWindowsOnlyTip = false;
+
+    /** Represents the base number of additional servers that is added to these requests.
+     * This does not represent the actual number of servers being fetched.
+     * The actual number is calculated after.
+     */
+    private readonly _serverAdditionalFetchAmount = 50;
+
+    /** Represents the minimum number of servers that must be fetched in order to trigger fetching.
+     * A number below this amount will not trigger fetching.
+     * This value is ignored if the start/end of a collection is reached, as no more servers come after.
+     */
+    private readonly _serverMinimumFetchAmount = 30;
 
     /** Specifies the first rendered index the last time the virtual scroll was rendered.
      * This value is used to determine the scroll direction in order to load more servers better.
@@ -116,7 +128,8 @@ export class ServersComponent implements OnInit, AfterViewInit {
         private readonly _modalService: ModalService,
     ) {
         // Subscribe to search input changes and fetch the new id list based on the search query.
-        this._searchInputChange.pipe(debounceTime(400), distinctUntilChanged()).subscribe((value) => {
+        this._searchInputChange.pipe(debounceTime(400), distinctUntilChanged(), combineLatestWith(this.vm$)).subscribe((args) => {
+            const [value, vm] = [args[0], args[1]];
             if (!value) {
                 return;
             }
@@ -141,21 +154,70 @@ export class ServersComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        this._virtualScrollViewportSubscription = this.virtualScrollViewport.renderedRangeStream.subscribe((range) => this.onVirtualListChange(range));
+        this._virtualScrollViewportSubscription = this.virtualScrollViewport.renderedRangeStream.pipe(combineLatestWith(this.vm$)).subscribe((args) => {
+            let range = args[0];
+            const vm = args[1];
+            const servers = vm.servers;
+
+            if (vm.servers.length == 0) {
+                return;
+            }
+
+            // Determine direction
+            const firstIndex = range.start;
+            const direction = firstIndex < this._firstIndexOnLastRender ? 'up' : 'down';
+            this._firstIndexOnLastRender = firstIndex;
+
+            // The directions implement sort of the same system.
+            // For readability they have been split.
+            // Determine what index to start, and what index to end.
+            // One index is based on when the first fetchable index can be found.
+            // The other is the last index that might be fetched.
+            // After that a take is determined. If this take is too low the fetch won't happen.
+            if (direction === 'down') {
+                const startIndex = servers.findIndex((server, index, _) => index >= range.start && !server.fetching && server.state === 'id');
+                if (startIndex == -1) {
+                    return;
+                }
+
+                const endIndex = Math.min(range.end + this._serverAdditionalFetchAmount, servers.length);
+                var reachedEnd = endIndex == servers.length;
+
+                range = { start: startIndex, end: endIndex };
+                var take = range.end - range.start;
+            } else {
+                const endIndex = servers.findLastIndex((server, index, _) => index <= range.end && !server.fetching && server.state === 'id');
+                if (endIndex == -1) {
+                    return;
+                }
+
+                const startIndex = Math.max(range.start - this._serverAdditionalFetchAmount, 0);
+                var reachedEnd = startIndex == 0;
+
+                range = { start: startIndex, end: endIndex + 1 };
+                var take = range.end - range.start;
+            }
+
+            // Take must be a minimum unless we reached the end of the collection.
+            if (!reachedEnd && take < this._serverMinimumFetchAmount) {
+                return;
+            }
+
+            //console.log('Final fetch range', range);
+            //console.log('Take', take);
+
+            // The servers being fetched should indicate they are being fetched.
+            for (const server of servers.slice(range.start, range.end)) {
+                server.fetching = true;
+            }
+
+            this._serversStore.updateListedServersByRange(range);
+        });
     }
 
     public trackByItemId(index: number, item: Server) {
         //console.log(index);
         return item.id;
-    }
-
-    public onVirtualListChange(range: ListRange) {
-        // Determine direction
-        const firstIndex = range.start;
-        const direction = firstIndex < this._firstIndexOnLastRender ? 'up' : 'down';
-        this._firstIndexOnLastRender = firstIndex;
-
-        this._serversStore.updateListedServersByRangeAndDirection({ range, direction });
     }
 
     public onServerClicked(server: Server) {
