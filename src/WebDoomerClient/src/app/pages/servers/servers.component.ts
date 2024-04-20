@@ -69,6 +69,9 @@ export class ServersComponent implements OnInit, AfterViewInit {
      */
     private _virtualScrollViewportSubscription?: Subscription;
 
+    // Indicates the search box is enabled.
+    public searchEnabled = false;
+
     public readonly settings$ = this._clientSettingsStore.settings$;
 
     /** Indicates at what media query size server rows are expected to be fully expanded. */
