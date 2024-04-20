@@ -6,7 +6,7 @@ import { ServersStore } from '../../stores/servers/servers.store';
 import { ListedServerComponent } from '../../components/listed-server/listed-server.component';
 import { Server } from '../../models/server';
 import { ListRange } from '@angular/cdk/collections';
-import { Subscription, map, tap } from 'rxjs';
+import { Subject, Subscription, debounceTime, distinctUntilChanged, map, tap } from 'rxjs';
 import { ListedServerSkeletonComponent } from '../../components/listed-server-skeleton/listed-server-skeleton.component';
 import { ServerSidebarComponent } from '../../components/server-sidebar/server-sidebar.component';
 import { ModalService } from '../../services/modal/modal.service';
@@ -71,8 +71,11 @@ export class ServersComponent implements OnInit, AfterViewInit {
      */
     private _virtualScrollViewportSubscription?: Subscription;
 
-    // Indicates the search box is enabled.
+    /** Indicates the search box is enabled. */
     public searchEnabled = false;
+
+    /** The subject to handle search input changes */
+    private _searchInputChange = new Subject<string | null>();
 
     public readonly settings$ = this._clientSettingsStore.settings$;
 
@@ -111,7 +114,15 @@ export class ServersComponent implements OnInit, AfterViewInit {
         private readonly _serversStore: ServersStore,
         private readonly _clientSettingsStore: ClientSettingsStore,
         private readonly _modalService: ModalService,
-    ) {}
+    ) {
+        // Subscribe to search input changes and fetch the new id list based on the search query.
+        this._searchInputChange.pipe(debounceTime(400), distinctUntilChanged()).subscribe((value) => {
+            if (!value) {
+                return;
+            }
+            console.log(value);
+        });
+    }
 
     ngOnInit() {
         // Handle any errors coming from the store.
@@ -177,5 +188,10 @@ export class ServersComponent implements OnInit, AfterViewInit {
             !!settings.qZandronumLocation ||
             !!settings.zandronumLocation
         );
+    }
+
+    public onSearchInputChange(event: Event) {
+        const value = (event.target as HTMLInputElement).value;
+        this._searchInputChange.next(value);
     }
 }
