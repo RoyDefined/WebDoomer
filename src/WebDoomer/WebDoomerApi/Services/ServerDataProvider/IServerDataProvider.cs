@@ -30,8 +30,9 @@ public interface IServerDataProvider
 	/// Returns all server ids as ordered by <paramref name="orderBy"/>.
 	/// </summary>
 	/// <param name="orderBy">The type of ordering to apply to the servers.</param>
+	/// <param name="search">An optional search string to search for specific server names.</param>
 	/// <returns>An <see cref="IEnumerable{T}"/> of <see cref="string"/> representing the id of a server.</returns>
-	IEnumerable<string> GetServerIds(OrderByType orderBy);
+	IEnumerable<string> GetServerIds(OrderByType orderBy, string? search);
 
 	/// <summary>
 	/// Indicates the start of a new stream of data for the given <paramref name="engineType"/>

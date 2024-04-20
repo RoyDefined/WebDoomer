@@ -19,19 +19,31 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
 
     private readonly _servers$ = this.select((state) => state.items);
     private readonly _loading$ = this.select((state) => state.loading);
+    private readonly _searchString$ = this.select((state) => state.searchString);
     private readonly _error$ = this.select((state) => state.error);
 
     public readonly vm$ = this.select({
         servers: this._servers$,
         loading: this._loading$,
+        searchString: this._searchString$,
         error: this._error$,
     });
+
+    public readonly getServerIdsWithSearchString = this.effect((searchString$: Observable<string>) =>
+        searchString$.pipe(
+            map((searchString) => {
+                this.setSearchString(searchString);
+                this.getServerIds();
+            }),
+        ),
+    );
 
     public readonly getServerIds = this.effect((trigger$) =>
         trigger$.pipe(
             tap(() => this.setLoading(true)),
-            switchMap(() =>
-                this._serversApiService.getServerIds().pipe(
+            combineLatestWith(this._searchString$),
+            switchMap((args) =>
+                this._serversApiService.getServerIds(args[1]).pipe(
                     tapResponse({
                         next: (ids) => {
                             const servers = ids.map((x) => new Server(this.sqidsConverter, x));
@@ -45,7 +57,6 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
                     }),
                 ),
             ),
-            take(1),
         ),
     );
 
@@ -128,6 +139,9 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
     private readonly setLoading = this.updater((state, loading: boolean) => {
         return { ...state, loading };
     });
+    private readonly setSearchString = this.updater((state, searchString: string) => {
+        return { ...state, searchString };
+    });
     private readonly setError = this.updater((state, error: Error) => {
         return { ...state, error };
     });
@@ -136,6 +150,7 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
         super({
             items: [],
             loading: false,
+            searchString: null,
             error: null,
         });
     }

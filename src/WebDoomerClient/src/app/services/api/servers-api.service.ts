@@ -21,8 +21,9 @@ export class ServersApiService {
     ) {}
 
     // TODO: Implement OrderBy
-    public getServerIds() {
-        return this._http.get(this.baseUrl + '/ids?orderBy=PlayersDescending', { observe: 'response' }).pipe(
+    public getServerIds(searchString: string | null) {
+        searchString = searchString != null ? encodeURIComponent(searchString) : '';
+        return this._http.get(this.baseUrl + `/ids?orderBy=PlayersDescending&search=${searchString}`, { observe: 'response' }).pipe(
             map((response) => {
                 if (!response.ok) {
                     if (response.body instanceof HttpErrorResponse) {

@@ -102,12 +102,12 @@ export class ServersComponent implements OnInit, AfterViewInit {
         private readonly _modalService: ModalService,
     ) {
         // Subscribe to search input changes and fetch the new id list based on the search query.
-        this._searchInputChange.pipe(debounceTime(400), distinctUntilChanged(), combineLatestWith(this.vm$)).subscribe((args) => {
-            const [value, vm] = [args[0], args[1]];
+        this._searchInputChange.pipe(debounceTime(400), distinctUntilChanged()).subscribe((value) => {
             if (!value) {
                 return;
             }
-            console.log(value);
+
+            this._serversStore.getServerIdsWithSearchString(value);
         });
     }
 

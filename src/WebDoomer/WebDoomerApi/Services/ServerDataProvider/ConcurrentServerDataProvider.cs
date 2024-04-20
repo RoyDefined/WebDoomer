@@ -182,9 +182,13 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider, IDispo
 	}
 
 	/// <inheritdoc />
-	public IEnumerable<string> GetServerIds(OrderByType orderBy)
+	public IEnumerable<string> GetServerIds(OrderByType orderBy, string? search)
 	{
 		var servers = this.GetServers(orderBy);
+		if (search != null)
+		{
+			servers = servers.Where(x => x.Name != null && x.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
+		}
 		return servers.Select(x => x.Id);
 	}
 

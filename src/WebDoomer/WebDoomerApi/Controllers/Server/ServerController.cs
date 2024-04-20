@@ -21,6 +21,13 @@ public class ServerController : ControllerBase
 		this._serverDataProvider = serverDataProvider;
 	}
 
+	[HttpGet("ids")]
+	public IActionResult GetServerIds(OrderByType orderBy, string? search)
+	{
+		var result = this._serverDataProvider.GetServerIds(orderBy, search);
+		return base.Ok(result);
+	}
+
 	[HttpGet("range")]
 	public IActionResult GetServersRange(OrderByType orderBy, int skip = 0, int take = int.MaxValue)
 	{
@@ -39,12 +46,5 @@ public class ServerController : ControllerBase
 		}
 
 		return base.Ok(DetailedServer.Create(result));
-	}
-
-	[HttpGet("ids")]
-	public IActionResult GetServerIds(OrderByType orderBy)
-	{
-		var result = this._serverDataProvider.GetServerIds(orderBy);
-		return base.Ok(result);
 	}
 }
