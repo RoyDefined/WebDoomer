@@ -221,7 +221,7 @@ internal class ZandronumServerService : IZandronumServerService, IDisposable
 				yield return builder.Build(ServerResultState.TimeOut);
 			}
 
-			//this._logger.LogWarning("Unfinished or timed out endpoints: {EndPointsJoined}", pendingBuilders.Select(x => x.Value.endPoint));
+			this._logger.LogWarning("Unfinished or timed out endpoints: {EndPointsJoined}", pendingBuilders.Select(x => x.Value.endPoint));
 		}
 
 		this._logger.LogDebug("Batch fetch finished after {StopwatchMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
