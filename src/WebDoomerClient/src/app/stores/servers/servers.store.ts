@@ -73,6 +73,10 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
                             const server = servers[range.start + i];
                             const updatedServer = updatedServers[i];
 
+                            if (!server) {
+                                continue;
+                            }
+
                             server.fetching = false;
 
                             // This should not trigger.
