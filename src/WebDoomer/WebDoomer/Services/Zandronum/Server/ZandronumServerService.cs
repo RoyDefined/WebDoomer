@@ -80,10 +80,6 @@ internal class ZandronumServerService : IZandronumServerService, IDisposable
 		this._logger.LogInformation("Start fetching server data. Total sockets: {SocketCount}. Flag set 0: ({Flagset0Int}){Flagset0}, flag set 1: ({Flagset1Int}){Flagset1}.", buffers.Count, (uint)flagset0, flagset0, (uint)flagset1, flagset1);
 		this._logger.LogDebug("Socket send buffer size: {SocketSendBufferSize}. Socket receive buffer size: {SocketReceiveBufferSize} Endpoints per buffer: {EndPointsPerBuffer}.", this._options.Server.SocketSendBufferSize, this._options.Server.SocketReceiveBufferSize, this._options.Server.EndPointsPerBuffer);
 
-		// The packet to send to all servers.
-		var packet = new HuffmanPacket(sizeof(int) * 4 + sizeof(byte))
-			.Write(protocolType, flagset0, flagset1);
-
 		var stopwatch = Stopwatch.StartNew();
 		var bag = new ConcurrentBag<ServerResult>();
 		var parallelTask = Parallel.ForEachAsync(buffers, cancellationToken, async (buffer, _) =>
@@ -91,6 +87,11 @@ internal class ZandronumServerService : IZandronumServerService, IDisposable
 			using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 			socket.SendBufferSize = this._options.Server.SocketSendBufferSize;
 			socket.ReceiveBufferSize = this._options.Server.SocketReceiveBufferSize;
+
+			// The packet to send to all servers.
+			// This is done in the parallel loop to avoid concurrency.
+			var packet = new HuffmanPacket(sizeof(int) * 4 + sizeof(byte))
+				.Write(protocolType, flagset0, flagset1);
 
 			var resultEnumerable = this.GetServersDataAsync(buffer, packet, socket, stopwatch, cancellationToken);
 			await foreach(var result in resultEnumerable)
@@ -119,6 +120,10 @@ internal class ZandronumServerService : IZandronumServerService, IDisposable
 	{
 		foreach (var endPoint in endPoints)
 		{
+			// Adjust packet write position so that the stopwatch time can be written.
+			sendPacket.WritePosition = sizeof(int) * 2;
+			_ = sendPacket.Write((int)stopwatch.ElapsedMilliseconds);
+
 			socket.SendTo(sendPacket, endPoint);
 
 			await Task.Delay(this._options.Server.SendDelay, cancellationToken)
@@ -181,7 +186,7 @@ internal class ZandronumServerService : IZandronumServerService, IDisposable
 			try
 			{
 				// Continue fetching for the endpoint if more data is expected.
-				if (builder.Parse(receivePacket))
+				if (builder.Parse(receivePacket, stopwatch))
 				{
 					if (receivePacket.UnreadBytes > 0)
 					{
@@ -196,7 +201,7 @@ internal class ZandronumServerService : IZandronumServerService, IDisposable
 					this._logger.LogWarning("Final packet of {EndPoint} contains unreadable bytes.", remoteEndpoint);
 				}
 
-				serverResult = builder.Build();
+				serverResult = builder.Build(ServerResultState.Success);
 				_ = pendingBuilders.Remove(remoteEndpoint);
 			}
 			catch (Exception ex)

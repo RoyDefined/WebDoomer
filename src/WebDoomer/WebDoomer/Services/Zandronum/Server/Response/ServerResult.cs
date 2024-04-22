@@ -170,8 +170,8 @@ public sealed class ServerResult
 			new ReadOnlyCollection<string>(builder.dehackedNameCollection) :
 			null;
 
-		// Not sure what to do with this yet.
-		var ping = builder.time;
+		// Ping is determined by taking the time returned from the server and decrementing this from the stopwatch's saved time on first response.
+		var ping = builder.firstResponseTime - builder.time;
 
 		return new ServerResult()
 		{

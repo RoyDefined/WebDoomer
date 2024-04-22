@@ -25,6 +25,7 @@ internal sealed class ServerResultBuilder
 	internal ServerQueryResponseType response;
 
 	internal int? time;
+	internal int? firstResponseTime;
 	internal string? version;
 
 	internal string? name;
@@ -76,8 +77,9 @@ internal sealed class ServerResultBuilder
 	/// Parses the packet into the builder.
 	/// </summary>
 	/// <param name="packet">The packet to parse.</param>
+	/// <param name="stopwatch">The stopwatch to handle the time it took for the first response to appear. Used to determine ping.</param>
 	/// <returns> Returns <see langword="true"/> if more packets are expected.</returns>
-	public bool Parse(Packet packet)
+	public bool Parse(Packet packet, Stopwatch stopwatch)
 	{
 		try
 		{
@@ -89,8 +91,14 @@ internal sealed class ServerResultBuilder
 				return false;
 			}
 
-			var @continue = this.ParseHeaderData(packet);
+			this.ParseHeaderData(packet, out var @continue, out var first);
 			this.ParseServerData(packet);
+
+			// Handle first packet response time.
+			if (first)
+			{
+				this.firstResponseTime = (int)stopwatch.ElapsedMilliseconds;
+			}
 
 			return @continue;
 		}
@@ -100,16 +108,17 @@ internal sealed class ServerResultBuilder
 		}
 	}
 
-	private bool ParseHeaderData(Packet packet)
+	private void ParseHeaderData(Packet packet, out bool @continue, out bool first)
 	{
 		switch (this.response)
 		{
 			case ServerQueryResponseType.challenge:
-
-				// Time and version. Both unused.
 				this.time = packet.GetInt();
 				this.version = packet.GetString(true);
-				return false;
+
+				@continue = false;
+				first = true;
+				return;
 
 			case ServerQueryResponseType.segmentedChallenge:
 				var segmentNumber = packet.GetByte();
@@ -118,17 +127,18 @@ internal sealed class ServerResultBuilder
 				_ = packet.GetShort();
 
 				var segmentIndex = segmentNumber & ~(1 << 7);
-				var @continue = (segmentNumber & (1 << 7)) == 0;
+				@continue = (segmentNumber & (1 << 7)) == 0;
 
 				// If the segment index is zero, this is the first packet.
-				if (segmentIndex == 0)
+				first = segmentIndex == 0;
+				if (first)
 				{
 					// Time and version. Both unused.
 					this.time = packet.GetInt();
 					this.version = packet.GetString(true);
 				}
 
-				return @continue;
+				return;
 
 			default:
 				throw new UnreachableException($"Response {this.response} is not a valid positive response.");
@@ -457,7 +467,7 @@ internal sealed class ServerResultBuilder
 		}
 	}
 
-	internal ServerResult Build(ServerResultState serverResultState = ServerResultState.Success)
+	internal ServerResult Build(ServerResultState serverResultState)
 	{
 		return ServerResult.Create(this, serverResultState);
 	}
