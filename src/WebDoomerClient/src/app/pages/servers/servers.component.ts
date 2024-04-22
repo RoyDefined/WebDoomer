@@ -103,10 +103,7 @@ export class ServersComponent implements OnInit, AfterViewInit {
     ) {
         // Subscribe to search input changes and fetch the new id list based on the search query.
         this._searchInputChange.pipe(debounceTime(400), distinctUntilChanged()).subscribe((value) => {
-            if (!value) {
-                return;
-            }
-
+            value ||= '';
             this._serversStore.getServerIdsWithSearchString(value);
         });
     }
