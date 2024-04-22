@@ -62,7 +62,7 @@ public partial class Packet
 	/// <summary>
 	/// Returns the number of writeable bytes that are left in the packet.
 	/// </summary>
-	public int RemainingWriteableBytes => this.ByteBuffer.Length - this.PacketSize;
+	public int RemainingWriteableBytes => this.ByteBuffer.Length - this._writePosition;
 
 	/// <summary>
 	/// The current write position for the <see cref="_byteBuffer"/>.
