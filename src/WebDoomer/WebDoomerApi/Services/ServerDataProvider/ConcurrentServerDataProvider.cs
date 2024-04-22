@@ -158,9 +158,9 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider, IDispo
 	}
 
 	/// <inheritdoc />
-	public IEnumerable<ProvidedServer> GetServersRange(OrderByType orderBy, int skip, int take)
+	public IEnumerable<ProvidedServer> GetServersRange(OrderByType orderBy, int skip, int take, string? search)
 	{
-		var servers = this.GetServers(orderBy);
+		var servers = this.GetServers(orderBy, search);
 
 		// Skip gets maxed to 0 so there's no negative result.
 		// Take is clamped between 0 and a maximum value.
@@ -184,15 +184,11 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider, IDispo
 	/// <inheritdoc />
 	public IEnumerable<string> GetServerIds(OrderByType orderBy, string? search)
 	{
-		var servers = this.GetServers(orderBy);
-		if (search != null)
-		{
-			servers = servers.Where(x => x.Name != null && x.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
-		}
+		var servers = this.GetServers(orderBy, search);
 		return servers.Select(x => x.Id);
 	}
 
-	private IEnumerable<ProvidedServer> GetServers(OrderByType orderBy)
+	private IEnumerable<ProvidedServer> GetServers(OrderByType orderBy, string? search)
 	{
 		var servers = this.Servers
 			.OrderByDescending(x => x.Name == null ? 0 : 1);
@@ -205,6 +201,11 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider, IDispo
 				.OrderByDescending(x => (x.PlayingClientCount ?? 0) + (x.SpectatingClientCount ?? 0)),
 			_ => this.Servers,
 		};
+
+		if (search != null)
+		{
+			result = result.Where(x => x.Name != null && x.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
+		}
 
 		return result;
 	}

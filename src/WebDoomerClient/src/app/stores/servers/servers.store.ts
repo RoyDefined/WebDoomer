@@ -62,12 +62,11 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
 
     public readonly updateListedServersByRange = this.effect((range$: Observable<ListRange>) =>
         range$.pipe(
-            combineLatestWith(this._servers$),
-            concatMap((args) => {
-                const [range, servers] = [args[0], args[1]];
+            combineLatestWith(this._servers$, this._searchString$),
+            concatMap(([range, servers, searchString]) => {
                 const take = range.end - range.start;
 
-                return this._serversApiService.GetServersPaginated(range.start, take).pipe(
+                return this._serversApiService.GetServersPaginated(range.start, take, searchString).pipe(
                     map((updatedServers) => {
                         for (let i = 0; i < take; i++) {
                             const server = servers[range.start + i];

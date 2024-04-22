@@ -22,16 +22,16 @@ public class ServerController : ControllerBase
 	}
 
 	[HttpGet("ids")]
-	public IActionResult GetServerIds(OrderByType orderBy, string? search)
+	public IActionResult GetServerIds(OrderByType orderBy, string? search = null)
 	{
 		var result = this._serverDataProvider.GetServerIds(orderBy, search);
 		return base.Ok(result);
 	}
 
 	[HttpGet("range")]
-	public IActionResult GetServersRange(OrderByType orderBy, int skip = 0, int take = int.MaxValue)
+	public IActionResult GetServersRange(OrderByType orderBy, int skip = 0, int take = int.MaxValue, string? search = null)
 	{
-		var result = this._serverDataProvider.GetServersRange(orderBy, skip, take);
+		var result = this._serverDataProvider.GetServersRange(orderBy, skip, take, search);
 		var listedServers = result.Select(ListedServer.Create);
 		return base.Ok(listedServers);
 	}

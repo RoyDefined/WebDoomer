@@ -16,8 +16,9 @@ public interface IServerDataProvider
 	/// <param name="orderBy">The type of ordering to apply to the servers.</param>
 	/// <param name="skip">The number of items to skip.</param>
 	/// <param name="take">The number of items to take.</param>
+	/// <param name="search">An optional search string to search for specific server names.</param>
 	/// <returns>An <see cref="IEnumerable{T}"/> of <see cref="ServerlistedRecord"/>.</returns>
-	IEnumerable<ProvidedServer> GetServersRange(OrderByType orderBy, int skip, int take);
+	IEnumerable<ProvidedServer> GetServersRange(OrderByType orderBy, int skip, int take, string? search);
 
 	/// <summary>
 	/// Returns a server under the given <paramref name="id"/>.
