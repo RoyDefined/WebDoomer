@@ -101,10 +101,15 @@ export class ServersComponent implements OnInit, AfterViewInit {
         private readonly _clientSettingsStore: ClientSettingsStore,
     ) {
         // Subscribe to search input changes and fetch the new id list based on the search query.
-        this._searchInputChange.pipe(debounceTime(400), distinctUntilChanged()).subscribe((value) => {
-            value ||= '';
-            this._serversStore.getServerIdsWithSearchString(value);
-        });
+        this._searchInputChange
+            .pipe(
+                debounceTime(400),
+                map((value) => value || ''),
+                distinctUntilChanged(),
+            )
+            .subscribe((value) => {
+                this._serversStore.getServerIdsWithSearchString(value);
+            });
     }
 
     ngOnInit() {
