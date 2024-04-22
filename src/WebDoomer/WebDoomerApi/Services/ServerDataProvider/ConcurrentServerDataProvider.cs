@@ -8,6 +8,9 @@ using WebDoomer.Zandronum;
 
 namespace WebDoomerApi.Services;
 
+/// <summary>
+/// Represents the base server data provider that handles data concurrently over different engines.
+/// </summary>
 internal sealed class ConcurrentServerDataProvider : IServerDataProvider, IDisposable
 {
 	/// <inheritdoc cref="ILogger"/>

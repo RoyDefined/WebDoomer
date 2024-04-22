@@ -8,6 +8,9 @@ using WebDoomer.Zandronum;
 
 namespace WebDoomerApi.Services;
 
+/// <summary>
+/// Represents a server provided by the provider to send over the network.
+/// </summary>
 public sealed record ProvidedServer(
 	string Id,
 	EngineType Engine,

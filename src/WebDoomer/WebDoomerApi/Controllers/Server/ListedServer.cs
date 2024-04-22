@@ -2,6 +2,9 @@
 
 namespace WebDoomerApi.Controllers;
 
+/// <summary>
+/// Represents a server variant that contains information suitable for a list.
+/// </summary>
 public sealed record ListedServer(
 	string Id,
 	EngineType Engine,

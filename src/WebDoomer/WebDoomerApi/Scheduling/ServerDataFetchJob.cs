@@ -14,6 +14,9 @@ using WebDoomerApi.Services;
 
 namespace WebDoomerApi.Jobs;
 
+/// <summary>
+/// Represents the main job that fetches all server data and stores them into a main provider.
+/// </summary>
 internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 {
 	/// <inheritdoc cref="ILogger"/>
@@ -72,6 +75,14 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 		this._logger.LogDebug("Server data fetch job finished.");
 	}
 
+	/// <summary>
+	/// Handles fetching all server endpoints from the given <paramref name="masterServerService"/>.
+	/// </summary>
+	/// <param name="masterServerService">The service to handle the request.</param>
+	/// <param name="address">The address under which to fetch the end points from.</param>
+	/// <param name="port">The port under which to fetch the end points from.</param>
+	/// <param name="cancellationToken">A token to cancel the operation early.</param>
+	/// <returns>An awaitable task that returns an <see cref="Array"/> of <see cref="IPEndPoint"/> representing the collection of servers to fetch data from.</returns>
 	private async Task<IPEndPoint[]> FetchEndpointsAsync(IZandronumMasterServerService masterServerService, string address, int port, CancellationToken cancellationToken)
 	{
 		this._logger.LogInformation("Fetching servers from master server {Address}:{Port}.", address, port);
@@ -91,6 +102,14 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 		return endPoints;
 	}
 
+	/// <summary>
+	/// Handles awaiting the given <paramref name="asyncEnumerable"/> for incoming servers and saves them in the provider under the given <paramref name="engineType"/>.
+	/// </summary>
+	/// <param name="asyncEnumerable">The enumerable that must be awaited and handled.</param>
+	/// <param name="engineType">The engine type under which the servers must be saved.</param>
+	/// <param name="expectedServerCount">The expected number of servers that will be fetched from the <paramref name="asyncEnumerable"/>.</param>
+	/// <param name="cancellationToken">A token to cancel the operation early.</param>
+	/// <returns>An awaitable task.</returns>
 	private async Task AwaitFetchAndSave(IAsyncEnumerable<ServerResult> asyncEnumerable, EngineType engineType, int expectedServerCount, CancellationToken cancellationToken)
 	{
 		this._serverDataProvider.StartSetData(engineType, expectedServerCount);
@@ -113,7 +132,11 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 		}
 	}
 
-	public static void Register(WebApplication app)
+	/// <summary>
+	/// Registers an event to handle the <see cref="ServerDataFetchJob"/>.
+	/// </summary>
+	/// <param name="app">The web application pipeline to fetch dependencies from.</param>
+	internal static void Register(WebApplication app)
 	{
 		var schedule = ScheduledEventBuilder.Create<ServerDataFetchJob>(nameof(ServerDataFetchJob), TimeSpan.FromMinutes(1))
 			.StartImmediatley()
