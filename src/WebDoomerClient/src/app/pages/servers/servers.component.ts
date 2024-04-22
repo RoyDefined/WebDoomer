@@ -205,6 +205,13 @@ export class ServersComponent implements OnInit, AfterViewInit {
         this.selectedServer = null;
     }
 
+    public toggleSearchInput() {
+        this.searchEnabled = !this.searchEnabled;
+        if (!this.searchEnabled) {
+            this._searchInputChange.next('');
+        }
+    }
+
     public onSearchInputChange(event: Event) {
         const value = (event.target as HTMLInputElement).value;
         this._searchInputChange.next(value);
