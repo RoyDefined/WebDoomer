@@ -49,14 +49,10 @@ public partial class Packet
 	private int _readPosition;
 
 	/// <summary>
-	/// The current write position for the <see cref="_byteBuffer"/>.
-	/// </summary>
-	private int _writePosition;
-
-	/// <summary>
 	/// The number of bytes in the current packet.
+	/// This value does not indicate the actual write position, only the actual written packet size.
 	/// </summary>
-	public int PacketSize => this._writePosition;
+	public int PacketSize { get; private set; }
 
     /// <summary>
     /// The amount of unread bytes left in the packet.
@@ -66,12 +62,37 @@ public partial class Packet
 	/// <summary>
 	/// Returns the number of writeable bytes that are left in the packet.
 	/// </summary>
-	public int RemainingWriteableBytes => this.ByteBuffer.Length - this._writePosition;
+	public int RemainingWriteableBytes => this.ByteBuffer.Length - this.PacketSize;
 
-    /// <summary>
-    /// Resets the read position of the packet back to the place where it can start reading for data.
-    /// </summary>
-    public void ResetReadPosition()
+	/// <summary>
+	/// The current write position for the <see cref="_byteBuffer"/>.
+	/// </summary>
+	private int _writePosition;
+
+	/// <summary>
+	/// Gets or sets the write position of the packet.
+	/// Setting a number higher than <see cref="PacketSize"/> will update the packet size to the new size.
+	/// </summary>
+	public int WritePosition
+	{
+		get => this._writePosition;
+		set
+		{
+			ArgumentOutOfRangeException.ThrowIfNegative(value, nameof(value));
+			ArgumentOutOfRangeException.ThrowIfGreaterThan(value, this.ByteBuffer.Length, nameof(value));
+
+			this._writePosition = value;
+			if (this._writePosition > this.PacketSize)
+			{
+				this.PacketSize = this._writePosition;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Resets the read position of the packet back to the place where it can start reading for data.
+	/// </summary>
+	public void ResetReadPosition()
     {
         this._readPosition = 0;
     }
@@ -82,6 +103,6 @@ public partial class Packet
 	/// <returns>The buffer as a <see cref="ReadOnlySpan{T}"/>.</returns>
 	public virtual ReadOnlySpan<byte> GetBuffer()
 	{
-		return this.ByteBuffer.AsSpan(0..this._writePosition);
+		return this.ByteBuffer.AsSpan(0..this.PacketSize);
 	}
 }
