@@ -53,10 +53,20 @@
 </app-header-bottom-content>
 
 @if (vm$ | async; as vm) {
-    @if (vm.error) {
-        <div class="text-warning bg-warning p-2 text-center font-medium">
-            <h1>There was an error during server fetching. Try reloading the page.</h1>
-        </div>
+    @if (vm.error || (vm.servers.length == 0 && !vm.loading)) {
+        @if (vm.error) {
+            <div class="text-danger bg-danger p-2 text-center font-medium">
+                <h1>There was an error during server fetching. Try reloading the page.</h1>
+            </div>
+        } @else if (vm.searchString) {
+            <div class="text-info bg-info p-2 text-center font-medium">
+                <h1>The search resulted in no servers. Try specifying something else.</h1>
+            </div>
+        } @else {
+            <div class="text-warning bg-warning p-2 text-center font-medium">
+                <h1>No servers were returned. Try again later.</h1>
+            </div>
+        }
     }
 }
 <div class="flex grow overflow-auto">
