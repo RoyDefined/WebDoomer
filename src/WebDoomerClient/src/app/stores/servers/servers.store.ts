@@ -3,7 +3,7 @@ import { ComponentStore, tapResponse } from '@ngrx/component-store';
 import { ServersStoreState } from './servers-store-state';
 import { ServersApiService } from '../../services/api/servers-api.service';
 import { Server } from '../../models/server';
-import { EMPTY, Observable, catchError, combineLatestWith, concatMap, map, mergeMap, switchMap, take, tap } from 'rxjs';
+import { EMPTY, Observable, catchError, concatMap, map, switchMap, tap, withLatestFrom } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import Sqids from 'sqids';
 import { ListRange } from '@angular/cdk/collections';
@@ -41,7 +41,7 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
     public readonly getServerIds = this.effect((trigger$) =>
         trigger$.pipe(
             tap(() => this.setLoading(true)),
-            combineLatestWith(this._searchString$),
+            withLatestFrom(this._searchString$),
             switchMap((args) =>
                 this._serversApiService.getServerIds(args[1]).pipe(
                     tapResponse({
@@ -62,7 +62,7 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
 
     public readonly updateListedServersByRange = this.effect((range$: Observable<ListRange>) =>
         range$.pipe(
-            combineLatestWith(this._servers$, this._searchString$),
+            withLatestFrom(this._servers$, this._searchString$),
             concatMap(([range, servers, searchString]) => {
                 const take = range.end - range.start;
 

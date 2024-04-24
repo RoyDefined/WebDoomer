@@ -6,7 +6,7 @@ import { ServersStore } from '../../stores/servers/servers.store';
 import { ListedServerComponent } from '../../components/listed-server/listed-server.component';
 import { Server } from '../../models/server';
 import { ListRange } from '@angular/cdk/collections';
-import { Subject, Subscription, combineLatestWith, debounceTime, distinctUntilChanged, map, tap } from 'rxjs';
+import { Subject, Subscription, debounceTime, distinctUntilChanged, map, tap, withLatestFrom } from 'rxjs';
 import { ListedServerSkeletonComponent } from '../../components/listed-server-skeleton/listed-server-skeleton.component';
 import { ServerSidebarComponent } from '../../components/server-sidebar/server-sidebar.component';
 import { ModalService } from '../../services/modal/modal.service';
@@ -129,7 +129,7 @@ export class ServersComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        this._virtualScrollViewportSubscription = this.virtualScrollViewport.renderedRangeStream.pipe(combineLatestWith(this.vm$)).subscribe((args) => {
+        this._virtualScrollViewportSubscription = this.virtualScrollViewport.renderedRangeStream.pipe(withLatestFrom(this.vm$)).subscribe((args) => {
             let range = args[0];
             const vm = args[1];
             const servers = vm.servers;

@@ -1,10 +1,6 @@
 import { Injectable } from '@angular/core';
-import { ComponentStore } from '@ngrx/component-store';
 import { HttpClient } from '@angular/common/http';
-import { ClientSettingsStore } from '../clientsettings/client-settings.store';
-import { EMPTY, catchError, combineLatestWith, finalize, map, of, take, tap } from 'rxjs';
-import { formatString } from '../../utils/stringUtils';
-import { AppSettingsStoreState } from './app-settings-store-state';
+import { map } from 'rxjs';
 import { z } from 'zod';
 import { appSettingsSchema } from './app-settings-schema';
 
