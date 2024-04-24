@@ -83,19 +83,19 @@
 
     <cdk-virtual-scroll-viewport itemSize="40" class="grow">
         @if (vm$ | async; as vm) {
-            @if (vm.loading) {
+            @if (vm.loading || !vm.servers) {
                 <app-listed-server-skeleton *ngFor="let i of [].constructor(100)"></app-listed-server-skeleton>
-            } @else if (vm.servers) {
-                <app-listed-server
-                    *cdkVirtualFor="let server of vm.servers; trackBy: trackByItemId"
-                    [server]="server"
-                    [selected]="selectedServer === server"
-                    [expandListMediaQuerySize]="expandListMediaQuerySize"
-                    (clicked)="onServerClicked($event)"
-                    class="select-none border-b"
-                >
-                </app-listed-server>
             }
+
+            <app-listed-server
+                *cdkVirtualFor="let server of vm.servers; trackBy: trackByItemId"
+                [server]="server"
+                [selected]="selectedServer === server"
+                [expandListMediaQuerySize]="expandListMediaQuerySize"
+                (clicked)="onServerClicked($event)"
+                class="select-none border-b"
+            >
+            </app-listed-server>
         }
     </cdk-virtual-scroll-viewport>
 </div>

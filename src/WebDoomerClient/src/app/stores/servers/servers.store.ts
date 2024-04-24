@@ -31,6 +31,7 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
 
     public readonly getServerIdsWithSearchString = this.effect((searchString$: Observable<string>) =>
         searchString$.pipe(
+            tap(() => this.setServers([])),
             map((searchString) => {
                 this.setSearchString(searchString);
                 this.getServerIds();
