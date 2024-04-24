@@ -3,7 +3,7 @@ import { ComponentStore, tapResponse } from '@ngrx/component-store';
 import { ServersStoreState } from './servers-store-state';
 import { ServersApiService } from '../../services/api/servers-api.service';
 import { Server } from '../../models/server';
-import { EMPTY, Observable, catchError, concatMap, map, switchMap, tap, withLatestFrom } from 'rxjs';
+import { EMPTY, Observable, catchError, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import Sqids from 'sqids';
 import { ListRange } from '@angular/cdk/collections';
@@ -63,7 +63,7 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
     public readonly updateListedServersByRange = this.effect((range$: Observable<ListRange>) =>
         range$.pipe(
             withLatestFrom(this._servers$, this._searchString$),
-            concatMap(([range, servers, searchString]) => {
+            mergeMap(([range, servers, searchString]) => {
                 const take = range.end - range.start;
 
                 return this._serversApiService.GetServersPaginated(range.start, take, searchString).pipe(
@@ -78,30 +78,18 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
 
                             server.fetching = false;
 
-                            // This should not trigger.
-                            // However, since we fetch data from the server with no reliable reason
-                            // to match in size we might as well keep this in.
+                            // Ignore received servers that can either not be found anymore or are already patched.
                             if (!updatedServer) {
-                                console.warn(`Failed to find an updated server with index ${i}.`);
+                                //console.warn(`Failed to find an updated server with index ${i}.`);
                                 continue;
                             }
 
                             if (server.state !== 'id') {
-                                console.warn(`Server state not 'id' for server with index ${i}.`);
+                                //console.warn(`Server state not 'id' for server with index ${i}.`);
                                 continue;
                             }
+
                             server.patchAsList(updatedServer);
-                        }
-
-                        // This iterates servers that are still marked as 'fetching'.
-                        // This should also not happen.
-                        for (const server of servers) {
-                            if (!server.fetching) {
-                                continue;
-                            }
-
-                            console.warn(`Server ${server.id} is still marked as fetching.`);
-                            server.fetching = false;
                         }
                     }),
                     catchError((error) => {
