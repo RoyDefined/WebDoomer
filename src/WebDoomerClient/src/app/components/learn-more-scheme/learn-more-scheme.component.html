@@ -40,16 +40,16 @@
             <app-tab [headerTemplateRef]="headerTemplateRef1" [bodyTemplateRef]="bodyTemplateRef1">
                 <ng-template #headerTemplateRef1>Registery file</ng-template>
                 <ng-template #bodyTemplateRef1>
-                    <div class="py-3">
+                    <div class="py-1">
                         @if (settings$ | async; as settings) {
-                            <ol class="ml-3 mt-2 flex flex-col gap-1">
+                            <ol class="ml-3 flex flex-col">
                                 @if (vm$ | async; as vm) {
                                     @if (vm.error) {
-                                        <div class="bg-yellow-200 p-2 text-center font-medium text-yellow-800 dark:bg-yellow-800 dark:text-yellow-400">
+                                        <div class="my-2 bg-yellow-200 p-2 text-center font-medium text-yellow-800 dark:bg-yellow-800 dark:text-yellow-400">
                                             <h1>There was an error fetching the registery file. Try reloading the page.</h1>
                                         </div>
                                     } @else {
-                                        <div class="text-info bg-info p-2 text-center font-medium">
+                                        <div class="text-info bg-info my-2 p-2 text-center font-medium">
                                             <h1>
                                                 Your browser will likely block the file as it might be malicious. This is not the case. When in doubt you can
                                                 always follow the manual steps and configure it yourself.
