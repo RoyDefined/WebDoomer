@@ -13,6 +13,8 @@ public sealed record ListedServer(
 	int? SpectatingClientCount,
 	int? BotCount,
 	byte? MaxClients,
+	bool? ForcePassword,
+	bool? ForceJoinPassword,
 	string? Country)
 {
 	internal static ListedServer Create(ProvidedServer server)
@@ -25,6 +27,8 @@ public sealed record ListedServer(
 			server.SpectatingClientCount,
 			server.BotCount,
 			server.MaxClients,
+			server.ForcePassword,
+			server.ForceJoinPassword,
 			server.Country);
 	}
 }

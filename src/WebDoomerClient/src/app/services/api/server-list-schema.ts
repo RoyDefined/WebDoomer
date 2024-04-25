@@ -13,6 +13,8 @@ export const serverListSchema = z
         spectatingClientCount: z.number().nonnegative().nullable(),
         botCount: z.number().nonnegative().nullable(),
         maxClients: z.number().nonnegative().nullable(),
+        forcePassword: z.boolean().nullable(),
+        forceJoinPassword: z.boolean().nullable(),
         country: z.string().min(1).nullable(),
     })
     .strict();

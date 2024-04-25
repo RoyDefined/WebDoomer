@@ -6,6 +6,7 @@ import { ToolTipDirective } from '../../directives/tooltip-directive';
 import { isMobile } from '../../utils/isMobile';
 import { isWindows } from '../../utils/isWindows';
 import { MediaQuerySize } from '../../utils/media-query-size';
+import { formatString } from '../../utils/stringUtils';
 
 @Component({
     standalone: true,
@@ -38,6 +39,31 @@ export class ListedServerComponent implements OnChanges {
         }
         const countryFlagurl = `assets/flags/${country}.jpg`;
         return countryFlagurl;
+    }
+
+    public get passwordUrl() {
+        const baseUrl = 'assets/{0}-pass-required.png';
+        const forcePassword = this.server.forcePassword;
+        const forceJoinPassword = this.server.forceJoinPassword;
+        return forcePassword && forceJoinPassword
+            ? formatString(baseUrl, 'both')
+            : forcePassword
+              ? formatString(baseUrl, 'connect')
+              : forceJoinPassword
+                ? formatString(baseUrl, 'join')
+                : '';
+    }
+
+    public get passwordTip() {
+        const forcePassword = this.server.forcePassword;
+        const forceJoinPassword = this.server.forceJoinPassword;
+        return forcePassword && forceJoinPassword
+            ? 'This server enforces both a connect and join password.'
+            : forcePassword
+              ? 'This server enforces a connect password.'
+              : forceJoinPassword
+                ? 'This server enforces a join password.'
+                : '';
     }
 
     public get clientCount() {

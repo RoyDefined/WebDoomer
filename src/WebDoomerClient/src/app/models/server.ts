@@ -78,6 +78,8 @@ export class Server implements z.infer<typeof serverSchema> {
         this.botCount = data.botCount;
         this.name = data.name;
         this.maxClients = data.maxClients;
+        this.forcePassword = data.forcePassword;
+        this.forceJoinPassword = data.forceJoinPassword;
         this.country = data.country;
 
         this.state = 'list';
