@@ -57,7 +57,7 @@
                     </div>
                     <ul>
                         @for (player of server.playerDataCollection; track player.name) {
-                            <li class="flex text-sm">
+                            <li class="flex text-sm" [ngClass]="{ 'opacity-75': player.isSpectating }">
                                 <div class="relative h-6 min-w-6" [tooltip]="getPlayerTypeToolTip(player)" placement="right">
                                     <img [ngSrc]="getPlayerTypeUrl(player)" class="mr-2 object-contain" fill />
                                 </div>
