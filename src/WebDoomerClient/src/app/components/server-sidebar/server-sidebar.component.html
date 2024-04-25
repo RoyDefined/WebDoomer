@@ -1,7 +1,7 @@
 <div class="flex h-10 items-center justify-end px-1">
     <button (click)="clickCollapse()" class="button highlight w-10" type="button">&LessLess;</button>
 </div>
-<div class="flex flex-col gap-2 text-nowrap px-1">
+<div class="flex flex-col gap-2 text-nowrap px-1 pb-8">
     <h1 class="line-clamp-2 h-12 text-balance text-center font-bold">{{ server.name }}</h1>
 
     @if (server.state !== 'detailed') {
@@ -114,7 +114,7 @@
                             <button class="button w-12 text-xs" copy-to-clipboard [content]="commandLineQuery">Copy</button>
                         </div>
                     </div>
-                    <div class="h-12 overflow-x-auto whitespace-nowrap">
+                    <div class="max-h-36 overflow-auto text-wrap">
                         {{ commandLineQuery }}
                     </div>
                 </li>
