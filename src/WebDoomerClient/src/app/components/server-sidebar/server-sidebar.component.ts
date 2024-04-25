@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Server } from '../../models/server';
 import { NgOptimizedImage } from '@angular/common';
-import { Observable } from 'rxjs';
 import { z } from 'zod';
 import { clientSettingsSchema } from '../../stores/clientsettings/client-settings-schema';
 import { formatString } from '../../utils/stringUtils';
@@ -9,12 +8,14 @@ import { isMobile } from '../../utils/isMobile';
 import { isWindows } from '../../utils/isWindows';
 import { CopyToClipboardDirective } from '../../directives/copy-to-clipboard-directive';
 import { DomSanitizer } from '@angular/platform-browser';
+import { playerSchema } from '../../models/player-schema';
+import { ToolTipDirective } from '../../directives/tooltip-directive';
 
 @Component({
     standalone: true,
     selector: 'app-server-sidebar',
     templateUrl: './server-sidebar.component.html',
-    imports: [NgOptimizedImage, CopyToClipboardDirective],
+    imports: [NgOptimizedImage, CopyToClipboardDirective, ToolTipDirective],
 })
 export class ServerSidebarComponent {
     @Input({ required: true }) server!: Server;
@@ -117,6 +118,15 @@ export class ServerSidebarComponent {
 
     public clickCollapse() {
         this.collapse.emit();
+    }
+
+    public getPlayerTypeUrl(player: z.infer<typeof playerSchema>) {
+        const baseUrl = 'assets/player-{0}.png';
+        return player.isBot ? formatString(baseUrl, 'bot') : player.isSpectating ? formatString(baseUrl, 'spectator') : formatString(baseUrl, 'regular');
+    }
+
+    public getPlayerTypeToolTip(player: z.infer<typeof playerSchema>) {
+        return player.isBot ? 'Bot' : player.isSpectating ? 'Spectator' : 'Player';
     }
 
     public formatPlayerName(name: string) {
