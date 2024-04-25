@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Server } from '../../models/server';
-import { NgOptimizedImage } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { z } from 'zod';
 import { clientSettingsSchema } from '../../stores/clientsettings/client-settings-schema';
 import { formatString } from '../../utils/stringUtils';
@@ -10,12 +10,13 @@ import { CopyToClipboardDirective } from '../../directives/copy-to-clipboard-dir
 import { DomSanitizer } from '@angular/platform-browser';
 import { playerSchema } from '../../models/player-schema';
 import { ToolTipDirective } from '../../directives/tooltip-directive';
+import { pwadSchema } from '../../models/pwad-schema';
 
 @Component({
     standalone: true,
     selector: 'app-server-sidebar',
     templateUrl: './server-sidebar.component.html',
-    imports: [NgOptimizedImage, CopyToClipboardDirective, ToolTipDirective],
+    imports: [NgOptimizedImage, CopyToClipboardDirective, ToolTipDirective, CommonModule],
 })
 export class ServerSidebarComponent {
     @Input({ required: true }) server!: Server;
@@ -127,6 +128,15 @@ export class ServerSidebarComponent {
 
     public getPlayerTypeToolTip(player: z.infer<typeof playerSchema>) {
         return player.isBot ? 'Bot' : player.isSpectating ? 'Spectator' : 'Player';
+    }
+
+    public getPwadTypeUrl(pwad: z.infer<typeof pwadSchema>) {
+        const baseUrl = 'assets/pwad-{0}.png';
+        return pwad.optional ? formatString(baseUrl, 'optional') : formatString(baseUrl, 'required');
+    }
+
+    public getPwadTypeToolTip(pwad: z.infer<typeof pwadSchema>) {
+        return pwad.optional ? 'Optional' : 'Required';
     }
 
     public formatPlayerName(name: string) {

@@ -90,9 +90,12 @@
                             </span>
                         </div>
                     </div>
-                    <ul>
+                    <ul class="flex flex-col gap-1 py-1">
                         @for (pwad of server.pwadCollection; track $index) {
-                            <li class="flex text-sm">
+                            <li class="flex text-sm" [ngClass]="{ 'opacity-75': pwad.optional }">
+                                <div class="relative h-6 min-w-6" [tooltip]="getPwadTypeToolTip(pwad)" placement="right">
+                                    <img [ngSrc]="getPwadTypeUrl(pwad)" class="mr-2 object-contain" fill />
+                                </div>
                                 <span class="grow">{{ pwad.name }}</span>
                             </li>
                         }
