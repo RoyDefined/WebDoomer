@@ -77,6 +77,31 @@ export class ServerSidebarComponent {
         return query.join(' ');
     }
 
+    public get passwordUrl() {
+        const baseUrl = 'assets/{0}-pass-required.png';
+        const forcePassword = this.server.forcePassword;
+        const forceJoinPassword = this.server.forceJoinPassword;
+        return forcePassword && forceJoinPassword
+            ? formatString(baseUrl, 'both')
+            : forcePassword
+              ? formatString(baseUrl, 'connect')
+              : forceJoinPassword
+                ? formatString(baseUrl, 'join')
+                : '';
+    }
+
+    public get passwordTip() {
+        const forcePassword = this.server.forcePassword;
+        const forceJoinPassword = this.server.forceJoinPassword;
+        return forcePassword && forceJoinPassword
+            ? 'Connect and join password required.'
+            : forcePassword
+              ? 'Connect password required.'
+              : forceJoinPassword
+                ? 'Join password required.'
+                : '';
+    }
+
     public get zandronumCommandLineQuery() {
         return formatString(
             this.baseEngineQuery,
