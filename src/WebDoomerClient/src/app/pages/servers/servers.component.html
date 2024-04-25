@@ -52,23 +52,6 @@
     }
 </app-header-bottom-content>
 
-@if (vm$ | async; as vm) {
-    @if (vm.error || (vm.servers.length == 0 && !vm.loading)) {
-        @if (vm.error) {
-            <div class="text-danger bg-danger p-2 text-center font-medium">
-                <h1>There was an error during server fetching. Try reloading the page.</h1>
-            </div>
-        } @else if (vm.searchString) {
-            <div class="text-info bg-info p-2 text-center font-medium">
-                <h1>The search resulted in no servers. Try specifying something else.</h1>
-            </div>
-        } @else {
-            <div class="text-warning bg-warning p-2 text-center font-medium">
-                <h1>No servers were returned. Try again later.</h1>
-            </div>
-        }
-    }
-}
 <div class="flex grow overflow-auto">
     @if (settings$ | async; as settings) {
         <div class="w-0 min-w-0 overflow-x-hidden transition-all duration-500" [ngClass]="{ 'min-w-full md:min-w-[32rem]': this.selectedServer }">
@@ -81,21 +64,41 @@
         </div>
     }
 
-    <cdk-virtual-scroll-viewport itemSize="40" class="grow">
+    <div class="flex grow flex-col overflow-auto">
         @if (vm$ | async; as vm) {
-            @if (vm.loading || !vm.servers) {
-                <app-listed-server-skeleton *ngFor="let i of [].constructor(100)"></app-listed-server-skeleton>
+            @if (vm.error || (vm.servers.length == 0 && !vm.loading)) {
+                @if (vm.error) {
+                    <div class="text-danger bg-danger p-2 text-center font-medium">
+                        <h1>There was an error during server fetching. Try reloading the page.</h1>
+                    </div>
+                } @else if (vm.searchString) {
+                    <div class="text-info bg-info p-2 text-center font-medium">
+                        <h1>The search resulted in no servers. Try specifying something else.</h1>
+                    </div>
+                } @else {
+                    <div class="text-warning bg-warning p-2 text-center font-medium">
+                        <h1>No servers were returned. Try again later.</h1>
+                    </div>
+                }
             }
-
-            <app-listed-server
-                *cdkVirtualFor="let server of vm.servers; trackBy: trackByItemId"
-                [server]="server"
-                [selected]="selectedServer === server"
-                [expandListMediaQuerySize]="expandListMediaQuerySize"
-                (clicked)="onServerClicked($event)"
-                class="select-none border-b"
-            >
-            </app-listed-server>
         }
-    </cdk-virtual-scroll-viewport>
+
+        <cdk-virtual-scroll-viewport itemSize="40" class="grow">
+            @if (vm$ | async; as vm) {
+                @if (vm.loading || !vm.servers) {
+                    <app-listed-server-skeleton *ngFor="let i of [].constructor(100)"></app-listed-server-skeleton>
+                }
+
+                <app-listed-server
+                    *cdkVirtualFor="let server of vm.servers; trackBy: trackByItemId"
+                    [server]="server"
+                    [selected]="selectedServer === server"
+                    [expandListMediaQuerySize]="expandListMediaQuerySize"
+                    (clicked)="onServerClicked($event)"
+                    class="select-none border-b"
+                >
+                </app-listed-server>
+            }
+        </cdk-virtual-scroll-viewport>
+    </div>
 </div>
