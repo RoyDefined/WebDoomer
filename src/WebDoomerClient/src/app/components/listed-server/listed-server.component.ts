@@ -42,7 +42,7 @@ export class ListedServerComponent implements OnChanges {
     }
 
     public get passwordUrl() {
-        const baseUrl = 'assets/{0}-pass-required.png';
+        const baseUrl = 'assets/password/{0}-pass-required.png';
         const forcePassword = this.server.forcePassword;
         const forceJoinPassword = this.server.forceJoinPassword;
         return forcePassword && forceJoinPassword

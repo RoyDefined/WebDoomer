@@ -78,7 +78,7 @@ export class ServerSidebarComponent {
     }
 
     public get passwordUrl() {
-        const baseUrl = 'assets/{0}-pass-required.png';
+        const baseUrl = 'assets/password/{0}-pass-required.png';
         const forcePassword = this.server.forcePassword;
         const forceJoinPassword = this.server.forceJoinPassword;
         return forcePassword && forceJoinPassword
@@ -147,7 +147,7 @@ export class ServerSidebarComponent {
     }
 
     public getPlayerTypeUrl(player: z.infer<typeof playerSchema>) {
-        const baseUrl = 'assets/player-{0}.png';
+        const baseUrl = 'assets/player/player-{0}.png';
         return player.isBot ? formatString(baseUrl, 'bot') : player.isSpectating ? formatString(baseUrl, 'spectator') : formatString(baseUrl, 'regular');
     }
 
@@ -156,7 +156,7 @@ export class ServerSidebarComponent {
     }
 
     public getPwadTypeUrl(pwad: z.infer<typeof pwadSchema>) {
-        const baseUrl = 'assets/pwad-{0}.png';
+        const baseUrl = 'assets/pwad/pwad-{0}.png';
         return pwad.optional ? formatString(baseUrl, 'optional') : formatString(baseUrl, 'required');
     }
 
