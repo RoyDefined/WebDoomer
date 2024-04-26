@@ -1,4 +1,5 @@
 import { Directive, ElementRef, HostListener, Input, Renderer2 } from '@angular/core';
+import { clamp } from '../utils/numberUtils';
 
 @Directive({
     standalone: true,
@@ -113,8 +114,12 @@ export class ToolTipDirective {
             left = hostPos.right + this.offset;
         }
 
+        top += scrollPos;
+        top = clamp(top, 0, window.innerHeight - tooltipPos.height);
+        left = clamp(left, 0, window.innerWidth - tooltipPos.width);
+
         return {
-            top: top + scrollPos,
+            top,
             left,
         };
     }
