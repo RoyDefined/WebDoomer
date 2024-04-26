@@ -42,7 +42,7 @@ export class ToolTipDirective {
     }
 
     private createTooltipElement(text: string) {
-        const tooltip = this._renderer.createElement('span') as HTMLSpanElement;
+        const tooltip = this._renderer.createElement('div') as HTMLDivElement;
         this._renderer.appendChild(tooltip, this._renderer.createText(text));
         this._renderer.appendChild(document.body, tooltip);
 
@@ -50,6 +50,7 @@ export class ToolTipDirective {
         tooltip.style.position = 'absolute';
         tooltip.style.zIndex = '1000';
         tooltip.style.fontSize = '14px';
+        tooltip.style.width = 'fit-content';
         tooltip.style.maxWidth = '15rem';
         tooltip.style.textAlign = 'center';
         tooltip.style.background = '#282a36';
