@@ -1,5 +1,5 @@
 import { CommonModule, NgOptimizedImage } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ConfigureSchemeComponent } from '../../components/configure-scheme/configure-scheme.component';
 import { ModalService } from '../../services/modal/modal.service';
@@ -12,16 +12,20 @@ import { HeaderRefService } from '../../services/header-ref/header-ref.service';
 import { clientSettingsSchema } from '../../stores/clientsettings/client-settings-schema';
 import { LearnMoreSchemeComponent } from '../../components/learn-more-scheme/learn-more-scheme.component';
 import { map } from 'rxjs';
+import { ToolTipDirective } from '../../directives/tooltip-directive';
+import { PingStore } from '../../stores/ping/ping.store';
 
 @Component({
     standalone: true,
     selector: 'app-header',
     templateUrl: './header.component.html',
-    imports: [CommonModule, RouterModule, NgOptimizedImage],
+    imports: [CommonModule, RouterModule, NgOptimizedImage, ToolTipDirective],
     providers: [ModalService],
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
     public readonly settings$ = this._clientSettingsStore.settings$;
+
+    public readonly vm$ = this._pingStore.vm$;
 
     /** If `true`, hide the header informing the user to add an association to the specified url. */
     public hideRegistryTip = false;
@@ -72,7 +76,27 @@ export class HeaderComponent {
         private readonly _modalService: ModalService,
         private readonly _clientSettingsStore: ClientSettingsStore,
         private readonly _headerRefService: HeaderRefService,
+        private readonly _pingStore: PingStore,
     ) {}
+
+    public ngOnInit() {
+        this._pingStore.getPing();
+    }
+
+    public getPingState(ping: number | null) {
+        return !ping ? 'None' : ping < 400 ? 'Healthy' : ping < 4000 ? 'Degraded' : 'Unhealthy';
+    }
+
+    public getPingMessage(ping: number | null) {
+        const state = this.getPingState(ping);
+        return state === 'Healthy'
+            ? 'Healthy connection'
+            : state === 'Degraded'
+              ? 'Degraded connection'
+              : state === 'Unhealthy'
+                ? 'Unhealthy connection'
+                : 'No connection';
+    }
 
     public openLearnMoreScheme() {
         this._modalService.openModal(LearnMoreSchemeComponent);

@@ -41,6 +41,22 @@
                 <img ngSrc="assets/logo/logo1.png" class="object-contain" fill priority />WebDoomer
             </a>
 
+            @if (vm$ | async; as vm) {
+                <div [tooltip]="vm.loading ? 'Loading...' : getPingMessage(vm.item)" placement="bottom">
+                    @if (getPingState(vm.item); as state) {
+                        <span
+                            class="mr-3 flex h-2 w-2 rounded-full"
+                            [ngClass]="{
+                                'bg-gray-500': vm.loading,
+                                'bg-red-500': !state || state === 'Unhealthy',
+                                'bg-yellow-500': state === 'Degraded',
+                                'bg-green-500': state === 'Healthy'
+                            }"
+                        ></span>
+                    }
+                </div>
+            }
+
             <ng-template *ngIf="headerLeftRef" [ngTemplateOutlet]="headerLeftRef"> </ng-template>
         </div>
         <div class="flex w-auto flex-row items-start gap-1">
