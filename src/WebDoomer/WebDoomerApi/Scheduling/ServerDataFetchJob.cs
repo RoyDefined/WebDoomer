@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -11,6 +12,7 @@ using WebDoomer.QZandronum;
 using WebDoomer.Zandronum;
 using WebDoomerApi.Scheduling;
 using WebDoomerApi.Services;
+using WebDoomerApi.SignalR;
 
 namespace WebDoomerApi.Jobs;
 
@@ -37,13 +39,17 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 	/// <inheritdoc cref="IServerDataProvider"/>
 	private readonly IServerDataProvider _serverDataProvider;
 
+	/// <inheritdoc cref="IHubContext{T}"/>
+	private readonly IHubContext<ServerHub> _serverHubContext;
+
 	public ServerDataFetchJob(
 		ILogger<ServerDataFetchJob> logger,
 		IZandronumMasterServerService zandronumMasterServerService,
 		IZandronumServerService zandronumServerService,
 		IQZandronumMasterServerService qZandronumMasterServerService,
 		IQZandronumServerService qZandronumServerService,
-		IServerDataProvider serverDataProvider)
+		IServerDataProvider serverDataProvider,
+		IHubContext<ServerHub> serverHubContext)
 	{
 		this._logger = logger;
 		this._zandronumMasterServerService = zandronumMasterServerService;
@@ -51,6 +57,7 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 		this._qZandronumMasterServerService = qZandronumMasterServerService;
 		this._qZandronumServerService = qZandronumServerService;
 		this._serverDataProvider = serverDataProvider;
+		this._serverHubContext = serverHubContext;
 	}
 
 	/// <inheritdoc />
@@ -72,7 +79,8 @@ internal sealed class ServerDataFetchJob : IAsyncScheduledInvoke
 		var task = Task.WhenAll([zandronumServerFetchTask, qZandronumServerFetchTask]);
 		await task;
 
-		this._logger.LogDebug("Server data fetch job finished.");
+		this._logger.LogDebug("Server data fetch job finished. Sending signal.");
+		_ = await this._serverHubContext.Clients.All.OnServerRefreshAsync(cancellationToken);
 	}
 
 	/// <summary>

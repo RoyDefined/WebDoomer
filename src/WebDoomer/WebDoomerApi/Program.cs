@@ -5,6 +5,8 @@ using WebDoomer;
 using WebDoomerApi.Services;
 using WebDoomerApi.RateLimit;
 using Microsoft.AspNetCore.HttpOverrides;
+using WebDoomerApi.SignalR;
+
 
 
 #if DEBUG
@@ -39,6 +41,9 @@ try
 #if DEBUG
 	_ = builder.Services.AddCors();
 #endif
+
+	// SignalR
+	_ = builder.Services.AddSignalRServerHub();
 
 	// WebDoomer
 	_ = builder.Services.AddWebDoomer(builder.Configuration, "WebDoomerOptions");
@@ -79,6 +84,9 @@ try
     app.UseDefaultFiles();
     app.UseStaticFiles();
 #endif
+
+	// SignalR
+	_ = app.UseSignalRServerHub();
 
 	_ = app.MapControllers();
 
