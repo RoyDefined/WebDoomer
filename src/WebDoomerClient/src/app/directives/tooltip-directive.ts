@@ -52,6 +52,7 @@ export class ToolTipDirective {
         tooltip.style.zIndex = '1000';
         tooltip.style.fontSize = '14px';
         tooltip.style.width = 'fit-content';
+        tooltip.style.height = 'fit-content';
         tooltip.style.maxWidth = '15rem';
         tooltip.style.textAlign = 'center';
         tooltip.style.background = '#282a36';
