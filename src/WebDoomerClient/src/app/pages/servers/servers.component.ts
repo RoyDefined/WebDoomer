@@ -21,6 +21,7 @@ import { MediaQuerySize } from '../../utils/media-query-size';
 import { HeaderLeftComponent } from '../../services/header-ref/components/header-left.component';
 import { HeaderRightComponent } from '../../services/header-ref/components/header-right.component';
 import { HeaderBottomComponent } from '../../services/header-ref/components/header-bottom.component';
+import { ServerHubStore } from '../../stores/signalr/server-hub.store';
 
 @Component({
     standalone: true,
@@ -99,6 +100,7 @@ export class ServersComponent implements OnInit, AfterViewInit {
     constructor(
         private readonly _serversStore: ServersStore,
         private readonly _clientSettingsStore: ClientSettingsStore,
+        private readonly _serverHubStore: ServerHubStore,
     ) {
         // Subscribe to search input changes and fetch the new id list based on the search query.
         this._searchInputChange
@@ -126,6 +128,13 @@ export class ServersComponent implements OnInit, AfterViewInit {
         });
 
         this._serversStore.getServerIds();
+
+        // Handle signalR signal to refresh the server list.
+        // TODO: Implement.
+        // TODO: Handle errors and disposing of subscription on error.
+        this._serverHubStore.onRefreshServers.subscribe(() => {
+            console.log('Server list refresh triggered.');
+        });
     }
 
     ngAfterViewInit() {
