@@ -130,10 +130,10 @@ export class ServersComponent implements OnInit, AfterViewInit {
         this._serversStore.getServerIds();
 
         // Handle signalR signal to refresh the server list.
-        // TODO: Implement.
         // TODO: Handle errors and disposing of subscription on error.
         this._serverHubStore.onRefreshServers.subscribe(() => {
             console.log('Server list refresh triggered.');
+            this._serversStore.getServerIds();
         });
     }
 

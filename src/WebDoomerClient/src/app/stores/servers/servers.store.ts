@@ -31,7 +31,6 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
 
     public readonly getServerIdsWithSearchString = this.effect((searchString$: Observable<string>) =>
         searchString$.pipe(
-            tap(() => this.setServers([])),
             map((searchString) => {
                 this.setSearchString(searchString);
                 this.getServerIds();
@@ -43,8 +42,10 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
         trigger$.pipe(
             tap(() => this.setLoading(true)),
             withLatestFrom(this._searchString$),
-            switchMap((args) =>
-                this._serversApiService.getServerIds(args[1]).pipe(
+            switchMap(([_, searchString]) => {
+                this.setServers([]);
+
+                return this._serversApiService.getServerIds(searchString).pipe(
                     tapResponse({
                         next: (ids) => {
                             const servers = ids.map((x) => new Server(this.sqidsConverter, x));
@@ -56,8 +57,8 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
                         },
                         finalize: () => this.setLoading(false),
                     }),
-                ),
-            ),
+                );
+            }),
         ),
     );
 
