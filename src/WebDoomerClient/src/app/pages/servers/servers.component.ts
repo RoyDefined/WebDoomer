@@ -72,6 +72,11 @@ export class ServersComponent implements OnInit, AfterViewInit {
      */
     private _virtualScrollViewportSubscription?: Subscription;
 
+    /** The subscription to the signalR signal that indicates the server list should be refreshed.
+     * Can be unsubscribed in the event of an error.
+     */
+    private _onRefreshServersSubscription?: Subscription;
+
     /** Indicates the search box is enabled. */
     public searchEnabled = false;
 
@@ -121,17 +126,22 @@ export class ServersComponent implements OnInit, AfterViewInit {
                 return;
             }
 
-            this._virtualScrollViewportSubscription?.unsubscribe();
+            this.onSubscriptionError(vm.error);
+        });
 
-            console.warn('There was an issue with one or more servers during fetching.');
-            console.error(vm.error);
+        // Handle any errors coming from the SignalR connection.
+        this._serverHubStore.vm$.subscribe((vm) => {
+            if (!vm.error) {
+                return;
+            }
+
+            this.onSubscriptionError(vm.error);
         });
 
         this._serversStore.getServerIds();
 
         // Handle signalR signal to refresh the server list.
-        // TODO: Handle errors and disposing of subscription on error.
-        this._serverHubStore.onRefreshServers.subscribe(() => {
+        this._onRefreshServersSubscription = this._serverHubStore.onRefreshServers.subscribe(() => {
             console.log('Server list refresh triggered.');
             this._serversStore.getServerIds();
         });
@@ -228,5 +238,13 @@ export class ServersComponent implements OnInit, AfterViewInit {
     public onSearchInputChange(event: Event) {
         const value = (event.target as HTMLInputElement).value;
         this._searchInputChange.next(value);
+    }
+
+    private onSubscriptionError(error: Error) {
+        this._virtualScrollViewportSubscription?.unsubscribe();
+        this._onRefreshServersSubscription?.unsubscribe();
+
+        console.warn('There was an issue with one of the stores.');
+        console.error(error);
     }
 }
