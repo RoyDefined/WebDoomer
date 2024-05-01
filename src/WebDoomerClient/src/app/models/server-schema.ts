@@ -9,6 +9,7 @@ import { playerSchema } from './player-schema';
 import { teamSchema } from './team-schema';
 import { dmFlagSchema } from './dm-flag-schema';
 import { dehackedNameSchema } from './dehacked-name-schema';
+import { voiceChatArray } from './voice-chat';
 
 /**
  * Represents the base schema used to define a server.
@@ -56,5 +57,6 @@ export const serverSchema = z
         country: z.string().min(1).nullable().optional(),
         gameModeName: z.string().min(1).nullable().optional(),
         gameModeShortName: z.string().min(1).nullable().optional(),
+        voiceChatType: z.number().nonnegative().lte(voiceChatArray.length).nullable().optional(),
     })
     .strict();

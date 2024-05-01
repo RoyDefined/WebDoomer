@@ -50,7 +50,8 @@ public sealed record ProvidedServer(
 	ReadOnlyCollection<string>? DehackedNameCollection,
 	string? Country,
 	string? GameModeName,
-	string? GameModeShortName)
+	string? GameModeShortName,
+	VoiceChatType? VoiceChatType)
 {
 	internal static ProvidedServer Create(ServerResult result, EngineType engine, SqidsEncoder<uint> encoder)
 	{
@@ -106,6 +107,7 @@ public sealed record ProvidedServer(
 			result.DehackedNameCollection,
 			result.Country,
 			result.GameModeName,
-			result.GameModeShortName);
+			result.GameModeShortName,
+			result.VoiceChatType);
 	}
 }

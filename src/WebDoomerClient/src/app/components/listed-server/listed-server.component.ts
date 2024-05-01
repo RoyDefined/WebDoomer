@@ -66,6 +66,21 @@ export class ListedServerComponent implements OnChanges {
                 : 'This server does not enforce any type of password.';
     }
 
+    public get voiceUrl() {
+        const baseUrl = 'assets/voice/voice-{0}.png';
+        return this.server.voiceChatType === 1 ? formatString(baseUrl, 'all') : formatString(baseUrl, 'limited');
+    }
+
+    public get voiceTip() {
+        return this.server.voiceChatType === 1
+            ? 'Voice chat is enabled for everybody.'
+            : this.server.voiceChatType === 2
+              ? 'Voice chat is enabled but players can only chat with their teammates.'
+              : this.server.voiceChatType === 3
+                ? 'Voice chat is enabled but players and spectators can only chat separately.'
+                : 'Voice chat is either disabled, not specified or the server does not support it.';
+    }
+
     public get clientCount() {
         return (this.server.playingClientCount || 0) + (this.server.spectatingClientCount || 0);
     }

@@ -58,6 +58,7 @@ export class Server implements z.infer<typeof serverSchema> {
     public country: z.infer<typeof serverSchema.shape.country>;
     public gameModeName: z.infer<typeof serverSchema.shape.gameModeName>;
     public gameModeShortName: z.infer<typeof serverSchema.shape.gameModeShortName>;
+    public voiceChatType: z.infer<typeof serverSchema.shape.voiceChatType>;
 
     constructor(sqidsConverter: Sqids, data: z.infer<typeof serverIdListSchema>) {
         const decoded = sqidsConverter.decode(data);
@@ -81,6 +82,7 @@ export class Server implements z.infer<typeof serverSchema> {
         this.forcePassword = data.forcePassword;
         this.forceJoinPassword = data.forceJoinPassword;
         this.country = data.country;
+        this.voiceChatType = data.voiceChatType;
 
         this.state = 'list';
     }

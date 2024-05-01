@@ -1,4 +1,5 @@
-﻿using WebDoomerApi.Services;
+﻿using WebDoomer.Zandronum;
+using WebDoomerApi.Services;
 
 namespace WebDoomerApi.Controllers;
 
@@ -15,7 +16,8 @@ public sealed record ListedServer(
 	byte? MaxClients,
 	bool? ForcePassword,
 	bool? ForceJoinPassword,
-	string? Country)
+	string? Country,
+	VoiceChatType? VoiceChatType)
 {
 	internal static ListedServer Create(ProvidedServer server)
 	{
@@ -29,6 +31,7 @@ public sealed record ListedServer(
 			server.MaxClients,
 			server.ForcePassword,
 			server.ForceJoinPassword,
-			server.Country);
+			server.Country,
+			server.VoiceChatType);
 	}
 }

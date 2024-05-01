@@ -62,6 +62,12 @@
                 <img [ngSrc]="passwordUrl" class="object-contain" fill />
             }
         </div>
+
+        <div class="relative h-6 min-w-6" [tooltip]="voiceTip">
+            @if (server.voiceChatType) {
+                <img [ngSrc]="voiceUrl" class="object-contain" fill />
+            }
+        </div>
     }
 
     @if (isWindows && !isMobile) {
