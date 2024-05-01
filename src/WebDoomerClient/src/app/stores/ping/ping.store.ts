@@ -15,8 +15,6 @@ import { PingApiService } from '../../services/api/ping-api.service';
     providedIn: 'root',
 })
 export class PingStore extends ComponentStore<PingStoreState> {
-    private readonly sqidsConverter = new Sqids();
-
     private readonly _item$ = this.select((state) => state.item);
     private readonly _loading$ = this.select((state) => state.loading);
     private readonly _error$ = this.select((state) => state.error);
@@ -30,8 +28,9 @@ export class PingStore extends ComponentStore<PingStoreState> {
     public readonly getPing = this.effect((trigger$) =>
         trigger$.pipe(
             tap(() => this.setLoading(true)),
-            switchMap(() =>
-                this._pingApiService.ping().pipe(
+            switchMap(() => {
+                this.setItem(null);
+                return this._pingApiService.ping().pipe(
                     tapResponse({
                         next: (item) => {
                             this.setItem(item);
@@ -41,8 +40,8 @@ export class PingStore extends ComponentStore<PingStoreState> {
                         },
                         finalize: () => this.setLoading(false),
                     }),
-                ),
-            ),
+                );
+            }),
         ),
     );
 

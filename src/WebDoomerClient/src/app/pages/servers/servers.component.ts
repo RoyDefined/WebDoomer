@@ -22,6 +22,7 @@ import { HeaderLeftComponent } from '../../services/header-ref/components/header
 import { HeaderRightComponent } from '../../services/header-ref/components/header-right.component';
 import { HeaderBottomComponent } from '../../services/header-ref/components/header-bottom.component';
 import { ServerHubStore } from '../../stores/signalr/server-hub.store';
+import { PingStore } from '../../stores/ping/ping.store';
 
 @Component({
     standalone: true,
@@ -106,6 +107,7 @@ export class ServersComponent implements OnInit, AfterViewInit {
         private readonly _serversStore: ServersStore,
         private readonly _clientSettingsStore: ClientSettingsStore,
         private readonly _serverHubStore: ServerHubStore,
+        private readonly _pingStore: PingStore,
     ) {
         // Subscribe to search input changes and fetch the new id list based on the search query.
         this._searchInputChange
@@ -145,6 +147,7 @@ export class ServersComponent implements OnInit, AfterViewInit {
             console.log('Server list refresh triggered.');
             this.selectedServer = null;
             this._serversStore.getServerIds();
+            this._pingStore.getPing();
         });
     }
 
