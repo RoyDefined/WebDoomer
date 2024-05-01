@@ -182,8 +182,12 @@ public enum ServerQueryDataFlagset1 : uint
 	/// <remarks>Internal name is <c>SQF2_GAMEMODE_SHORTNAME</c>.</remarks>
 	gameModeShortName = 0x00000008,
 
+	/// <summary>The server's voice chat setting.</summary>
+	/// <remarks>Internal name is <c>SQF2_VOICECHAT</c>.</remarks>
+	voiceChat = 0x00000010,
+
 	/// <summary>
 	/// All details about the server that can be queried.
 	/// </summary>
-	all = pwadHashes | country | gameModeName | gameModeShortName,
+	all = pwadHashes | country | gameModeName | gameModeShortName | voiceChat,
 }

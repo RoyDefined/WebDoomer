@@ -129,6 +129,7 @@ switch(commandOptions.FetchType)
 			logger.Information("ZACompatFlags: {Value}.", serverResult.DmFlagCollection?.ElementAt(4));
 			logger.Information("CompatFlags2: {Value}.", serverResult.DmFlagCollection?.ElementAt(5));
 			logger.Information("Country: {Value}.", serverResult.Country);
+			logger.Information("Voice chat type: {Value} ({ValueInt}).", serverResult.VoiceChatType, (int?)serverResult.VoiceChatType);
 
 			if (serverResult.PlayerDataCollection != null)
 			{

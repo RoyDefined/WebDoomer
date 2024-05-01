@@ -54,6 +54,7 @@ public sealed class ServerResult
 	public required string? Country { get; init; }
 	public required string? GameModeName { get; init; }
 	public required string? GameModeShortName { get; init; }
+	public required VoiceChatType? VoiceChatType { get; init; }
 
 	/// <summary>
 	/// Creates a new instance of <see cref="ServerResult"/> using the provided <see cref="ServerResultBuilder"/>.
@@ -170,6 +171,8 @@ public sealed class ServerResult
 			new ReadOnlyCollection<string>(builder.dehackedNameCollection) :
 			null;
 
+		var voiceChatType = (VoiceChatType?)builder.voiceChat;
+
 		// Ping is determined by taking the time returned from the server and decrementing this from the stopwatch's saved time on first response.
 		var ping = builder.firstResponseTime - builder.time;
 
@@ -214,6 +217,7 @@ public sealed class ServerResult
 			Country = builder.country,
 			GameModeName = builder.gameModeName,
 			GameModeShortName = builder.gameModeShortName,
+			VoiceChatType = voiceChatType,
 		};
 	}
 }

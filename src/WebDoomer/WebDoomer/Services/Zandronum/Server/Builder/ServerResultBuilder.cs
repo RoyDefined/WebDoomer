@@ -66,6 +66,7 @@ internal sealed class ServerResultBuilder
 	internal string? country;
 	internal string? gameModeName;
 	internal string? gameModeShortName;
+	internal byte? voiceChat;
 
 	public ServerResultBuilder(
 		IPEndPoint endPoint)
@@ -446,6 +447,11 @@ internal sealed class ServerResultBuilder
 		{
 			var value = packet.GetString(true).Trim();
 			this.AssignVariableOrThrowIfNotNull(ref this.gameModeShortName, value, ServerQueryDataFlagset1.gameModeShortName.ToString());
+		}
+
+		if (flags.HasFlag(ServerQueryDataFlagset1.voiceChat))
+		{
+			this.AssignVariableOrThrowIfNotNull(ref this.voiceChat, packet.GetByte(), ServerQueryDataFlagset1.voiceChat.ToString());
 		}
 	}
 
