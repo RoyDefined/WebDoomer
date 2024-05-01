@@ -63,7 +63,7 @@ export class ListedServerComponent implements OnChanges {
               ? 'This server enforces a connect password.'
               : forceJoinPassword
                 ? 'This server enforces a join password.'
-                : '';
+                : 'This server does not enforce any type of password.';
     }
 
     public get clientCount() {

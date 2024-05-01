@@ -21,12 +21,6 @@
             {{ server.name }}
         </div>
 
-        @if (server.forcePassword || server.forceJoinPassword) {
-            <div class="relative h-6 min-w-6" [tooltip]="passwordTip">
-                <img [ngSrc]="passwordUrl" class="mr-2 object-contain" fill />
-            </div>
-        }
-
         <!-- Minimum width still allows the tooltip to trigger with no players. -->
         <div class="flex min-w-10 justify-end" [tooltip]="playerCountTitle">
             <span class="sr-only">{{ playerCountTitle }}</span>
@@ -62,13 +56,19 @@
                 </div>
             }
         </div>
+
+        <div class="relative h-6 min-w-6" [tooltip]="passwordTip">
+            @if (server.forcePassword || server.forceJoinPassword) {
+                <img [ngSrc]="passwordUrl" class="object-contain" fill />
+            }
+        </div>
     }
 
     @if (isWindows && !isMobile) {
         <a
             stop-propagation
             [href]="'zan://' + server.ip + ':' + server.port"
-            class="button highlight ml-3 min-w-12 self-center text-center group-[.expand-at-sm]:sm:min-w-32 group-[.expand-at-md]:md:min-w-32 group-[.expand-at-lg]:lg:min-w-32 group-[.expand-at-xl]:xl:min-w-32 group-[.expand-at-2xl]:2xl:min-w-32"
+            class="button highlight min-w-12 self-center text-center group-[.expand-at-sm]:sm:min-w-32 group-[.expand-at-md]:md:min-w-32 group-[.expand-at-lg]:lg:min-w-32 group-[.expand-at-xl]:xl:min-w-32 group-[.expand-at-2xl]:2xl:min-w-32"
             type="button"
         >
             Join
