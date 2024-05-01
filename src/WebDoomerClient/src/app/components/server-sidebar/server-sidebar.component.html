@@ -42,6 +42,15 @@
                     {{ passwordTip }}
                 </div>
             }
+
+            @if (server.voiceChatType && server.voiceChatType !== 0) {
+                <div class="w6 flex h-6 justify-center font-bold">
+                    <div class="relative h-full w-10">
+                        <img [ngSrc]="voiceUrl" class="mr-2 object-contain" fill />
+                    </div>
+                    {{ voiceTip }}
+                </div>
+            }
         </div>
 
         <ul class="my-1 flex flex-col gap-10">
