@@ -14,6 +14,7 @@ import { LearnMoreSchemeComponent } from '../../components/learn-more-scheme/lea
 import { map } from 'rxjs';
 import { ToolTipDirective } from '../../directives/tooltip-directive';
 import { PingStore } from '../../stores/ping/ping.store';
+import { AppSettingsStore } from '../../stores/appsettings/app-settings.store';
 
 @Component({
     standalone: true,
@@ -73,6 +74,7 @@ export class HeaderComponent implements OnInit {
     }
 
     constructor(
+        private readonly _appSettingsStore: AppSettingsStore,
         private readonly _modalService: ModalService,
         private readonly _clientSettingsStore: ClientSettingsStore,
         private readonly _headerRefService: HeaderRefService,
@@ -80,7 +82,7 @@ export class HeaderComponent implements OnInit {
     ) {}
 
     public ngOnInit() {
-        this._pingStore.getPing();
+        this._pingStore.getPing(this._appSettingsStore.settings.pingProtocol);
     }
 
     public getPingState(ping: number | null) {

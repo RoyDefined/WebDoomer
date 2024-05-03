@@ -23,6 +23,7 @@ import { HeaderRightComponent } from '../../services/header-ref/components/heade
 import { HeaderBottomComponent } from '../../services/header-ref/components/header-bottom.component';
 import { ServerHubStore } from '../../stores/signalr/server-hub.store';
 import { PingStore } from '../../stores/ping/ping.store';
+import { AppSettingsStore } from '../../stores/appsettings/app-settings.store';
 
 @Component({
     standalone: true,
@@ -104,6 +105,7 @@ export class ServersComponent implements OnInit, AfterViewInit {
     }
 
     constructor(
+        private readonly _appSettingsStore: AppSettingsStore,
         private readonly _serversStore: ServersStore,
         private readonly _clientSettingsStore: ClientSettingsStore,
         private readonly _serverHubStore: ServerHubStore,
@@ -147,7 +149,7 @@ export class ServersComponent implements OnInit, AfterViewInit {
             console.log('Server list refresh triggered.');
             this.selectedServer = null;
             this._serversStore.getServerIds();
-            this._pingStore.getPing();
+            this._pingStore.getPing(this._appSettingsStore.settings.pingProtocol);
         });
     }
 

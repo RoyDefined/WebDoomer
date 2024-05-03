@@ -8,6 +8,8 @@ import Sqids from 'sqids';
 import { ListRange } from '@angular/cdk/collections';
 import { PingStoreState } from './ping-store-state';
 import { PingApiService } from '../../services/api/ping-api.service';
+import { z } from 'zod';
+import { appSettingsPingProtocolSchema } from '../appsettings/app-settings-schema';
 
 /** Represents the store that handles communicating with the backend to determine ping and uptime.
  */
@@ -25,12 +27,12 @@ export class PingStore extends ComponentStore<PingStoreState> {
         error: this._error$,
     });
 
-    public readonly getPing = this.effect((trigger$) =>
-        trigger$.pipe(
+    public readonly getPing = this.effect((protocol$: Observable<z.infer<typeof appSettingsPingProtocolSchema>>) =>
+        protocol$.pipe(
             tap(() => this.setLoading(true)),
-            switchMap(() => {
+            switchMap((protocol) => {
                 this.setItem(null);
-                return this._pingApiService.ping('Timer').pipe(
+                return this._pingApiService.ping(protocol).pipe(
                     tapResponse({
                         next: (item) => {
                             this.setItem(item);

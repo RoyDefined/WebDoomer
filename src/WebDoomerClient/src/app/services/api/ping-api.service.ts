@@ -6,6 +6,8 @@ import { serverIdListArraySchema } from './server-id-list-schema';
 import { Server } from '../../models/server';
 import { serverDetailedSchema } from './server-detailed-schema';
 import { AppSettingsStore } from '../../stores/appsettings/app-settings.store';
+import { z } from 'zod';
+import { appSettingsPingProtocolSchema } from '../../stores/appsettings/app-settings-schema';
 
 @Injectable({
     providedIn: 'root',
@@ -20,7 +22,7 @@ export class PingApiService {
         private readonly _appSettingsStore: AppSettingsStore,
     ) {}
 
-    public ping(protocol: 'Unix' | 'Timer') {
+    public ping(protocol: z.infer<typeof appSettingsPingProtocolSchema>) {
         const now = new Date();
         return this._http.get(this.baseUrl + 'ping/', { observe: 'response' }).pipe(
             map((response) => {
