@@ -3,7 +3,7 @@ import { ComponentStore } from '@ngrx/component-store';
 import { RegisteryFileStoreState } from './registery-file-store-state';
 import { HttpClient } from '@angular/common/http';
 import { ClientSettingsStore } from '../clientsettings/client-settings.store';
-import { EMPTY, catchError, combineLatestWith, finalize, map, take, tap } from 'rxjs';
+import { EMPTY, catchError, finalize, map, take, tap, withLatestFrom } from 'rxjs';
 import { registryFileSchema } from './registery-file-schema';
 import { formatString } from '../../utils/stringUtils';
 
@@ -30,7 +30,7 @@ export class RegisteryFileStore extends ComponentStore<RegisteryFileStoreState> 
     public readonly fetchRegistryFile = this.effect((trigger$) =>
         trigger$.pipe(
             tap(() => this.setLoading(true)),
-            combineLatestWith(this._registryFileFetch),
+            withLatestFrom(this._registryFileFetch),
             map((args) => {
                 const response = args[1];
 
@@ -59,7 +59,7 @@ export class RegisteryFileStore extends ComponentStore<RegisteryFileStoreState> 
 
     public readonly updateRegisteryFileContent = this.effect((trigger$) =>
         trigger$.pipe(
-            combineLatestWith(this._clientSettingsStore.settings$, this._baseFile$),
+            withLatestFrom(this._clientSettingsStore.settings$, this._baseFile$),
             map((args) => {
                 const settings = args[1];
                 let file = args[2];

@@ -48,8 +48,8 @@ internal sealed class SchedulerHostedService : IHostedService, IDisposable
 	private void OnApplicationStarted()
 	{
 		this._logger.LogDebug("Scheduler hosted service is starting.");
-		this._timer = new(this.TimerRunUserSyncInvokerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
 		this._schedulerCancellationTokenSource = new();
+		this._timer = new(this.TimerRunUserSyncInvokerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
 	}
 
 	/// <summary>

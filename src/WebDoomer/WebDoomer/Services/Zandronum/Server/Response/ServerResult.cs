@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using System.Net.NetworkInformation;
 
 namespace WebDoomer.Zandronum;
 
@@ -15,6 +16,9 @@ public sealed class ServerResult
 	public required IPEndPoint EndPoint { get; init; }
 	public required ServerQueryResponseType ServerChallengeResponse { get; init; }
 	public required ServerResultState State { get; init; }
+
+	public required int? Ping { get; init; }
+	public required string? Version { get; init; }
 
 	public required string? Name { get; init; }
 	public required string? Url { get; init; }
@@ -50,6 +54,7 @@ public sealed class ServerResult
 	public required string? Country { get; init; }
 	public required string? GameModeName { get; init; }
 	public required string? GameModeShortName { get; init; }
+	public required VoiceChatType? VoiceChatType { get; init; }
 
 	/// <summary>
 	/// Creates a new instance of <see cref="ServerResult"/> using the provided <see cref="ServerResultBuilder"/>.
@@ -112,15 +117,25 @@ public sealed class ServerResult
 			(BotSkill)builder.botSkill :
 			null;
 
-		var playerEnumerable = builder.playerDataCollection?.Select(x => new Player()
+		var playerEnumerable = builder.playerDataCollection?.Select(x =>
 		{
-			Name = x.Name,
-			ScoreCount = x.ScoreCount,
-			Ping = x.Ping,
-			IsSpectating = x.IsSpectating,
-			IsBot = x.IsBot,
-			Team = x.Team,
-			PlayTime = x.PlayTime,
+			// Convert any instances of '\u001c' to '\c'.
+			// This is something Zandronum does so we have to convert it back.
+			var name = x.Name.Replace("\u001c", "\\c", StringComparison.OrdinalIgnoreCase);
+
+			// Make sure ping is valid. Also handle 0 as this covers bots.
+			short? ping = x.Ping <= 0 ? null : x.Ping;
+
+			return new Player()
+			{
+				Name = name,
+				ScoreCount = x.ScoreCount,
+				Ping = ping,
+				IsSpectating = x.IsSpectating,
+				IsBot = x.IsBot,
+				Team = x.Team,
+				PlayTime = x.PlayTime,
+			};
 		});
 
 		var playerCollection = playerEnumerable != null ?
@@ -156,8 +171,15 @@ public sealed class ServerResult
 			new ReadOnlyCollection<string>(builder.dehackedNameCollection) :
 			null;
 
+		var voiceChatType = (VoiceChatType?)builder.voiceChat;
+
+		// Ping is determined by taking the time returned from the server and decrementing this from the stopwatch's saved time on first response.
+		var ping = builder.firstResponseTime - builder.time;
+
 		return new ServerResult()
 		{
+			Ping = ping,
+			Version = builder.version,
 			EndPoint = builder.endPoint,
 			ServerChallengeResponse = builder.response,
 			State = serverResultState,
@@ -195,6 +217,7 @@ public sealed class ServerResult
 			Country = builder.country,
 			GameModeName = builder.gameModeName,
 			GameModeShortName = builder.gameModeShortName,
+			VoiceChatType = voiceChatType,
 		};
 	}
 }

@@ -20,7 +20,7 @@ public partial class Packet
 			throw new InvalidOperationException("Unable to write byte into the packet as the remaining byte size of the packet is 0.");
 		}
 
-        this.ByteBuffer[this._writePosition++] = value;
+        this.ByteBuffer[this.WritePosition++] = value;
         return this;
     }
 

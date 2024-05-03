@@ -13,9 +13,9 @@ public sealed class Player
 	/// <remarks>Internal name is <c>SQF_PLAYERDATA_FRAGPOINTKILLCOUNT</c>.</remarks>
 	public required short ScoreCount { get; init; }
 
-	/// <summary>Player's ping.</summary>
+	/// <summary>Player's ping. Will be <see langword="null"/> if invalid or 0.</summary>
 	/// <remarks>Internal name is <c>SQF_PLAYERDATA_NAME</c>.</remarks>
-	public required short Ping { get; init; }
+	public required short? Ping { get; init; }
 
 	/// <summary>If <see langword="true"/>, the player is spectating.</summary>
 	/// <remarks>Internal name is <c>SQF_PLAYERDATA_SPECTATING</c>.</remarks>

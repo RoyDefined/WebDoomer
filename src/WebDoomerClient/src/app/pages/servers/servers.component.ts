@@ -6,7 +6,7 @@ import { ServersStore } from '../../stores/servers/servers.store';
 import { ListedServerComponent } from '../../components/listed-server/listed-server.component';
 import { Server } from '../../models/server';
 import { ListRange } from '@angular/cdk/collections';
-import { Subscription, map, tap } from 'rxjs';
+import { Subject, Subscription, debounceTime, distinctUntilChanged, map, tap, withLatestFrom } from 'rxjs';
 import { ListedServerSkeletonComponent } from '../../components/listed-server-skeleton/listed-server-skeleton.component';
 import { ServerSidebarComponent } from '../../components/server-sidebar/server-sidebar.component';
 import { ModalService } from '../../services/modal/modal.service';
@@ -17,6 +17,13 @@ import { isMobile } from '../../utils/isMobile';
 import { isWindows } from '../../utils/isWindows';
 import { z } from 'zod';
 import { clientSettingsSchema } from '../../stores/clientsettings/client-settings-schema';
+import { MediaQuerySize } from '../../utils/media-query-size';
+import { HeaderLeftComponent } from '../../services/header-ref/components/header-left.component';
+import { HeaderRightComponent } from '../../services/header-ref/components/header-right.component';
+import { HeaderBottomComponent } from '../../services/header-ref/components/header-bottom.component';
+import { ServerHubStore } from '../../stores/signalr/server-hub.store';
+import { PingStore } from '../../stores/ping/ping.store';
+import { AppSettingsStore } from '../../stores/appsettings/app-settings.store';
 
 @Component({
     standalone: true,
@@ -24,7 +31,16 @@ import { clientSettingsSchema } from '../../stores/clientsettings/client-setting
     host: {
         class: 'flex flex-col overflow-auto grow',
     },
-    imports: [CommonModule, ScrollingModule, ListedServerComponent, ListedServerSkeletonComponent, ServerSidebarComponent],
+    imports: [
+        CommonModule,
+        ScrollingModule,
+        ListedServerComponent,
+        ListedServerSkeletonComponent,
+        ServerSidebarComponent,
+        HeaderLeftComponent,
+        HeaderRightComponent,
+        HeaderBottomComponent,
+    ],
     providers: [ModalService],
 })
 export class ServersComponent implements OnInit, AfterViewInit {
@@ -36,17 +52,17 @@ export class ServersComponent implements OnInit, AfterViewInit {
     /** The server that is currently being focused for the sidebar.*/
     public selectedServer: Server | null = null;
 
-    /** If `true`, hide the header informing the user to add an association to the specified url. */
-    public hideRegistryTip = false;
-
-    /** If `true`, hide the header informing the user to add personal configuration.
-     * This variable might be turned on by default should the user already have valid configuration.
+    /** Represents the base number of additional servers that is added to these requests.
+     * This does not represent the actual number of servers being fetched.
+     * The actual number is calculated after.
      */
-    public hidePersonalConfigurationTip = false;
+    private readonly _serverAdditionalFetchAmount = 50;
 
-    /** If `true`, hide the header informing the user joining is only supported on Windows.
+    /** Represents the minimum number of servers that must be fetched in order to trigger fetching.
+     * A number below this amount will not trigger fetching.
+     * This value is ignored if the start/end of a collection is reached, as no more servers come after.
      */
-    public hideWindowsOnlyTip = false;
+    private readonly _serverMinimumFetchAmount = 30;
 
     /** Specifies the first rendered index the last time the virtual scroll was rendered.
      * This value is used to determine the scroll direction in order to load more servers better.
@@ -58,7 +74,23 @@ export class ServersComponent implements OnInit, AfterViewInit {
      */
     private _virtualScrollViewportSubscription?: Subscription;
 
+    /** The subscription to the signalR signal that indicates the server list should be refreshed.
+     * Can be unsubscribed in the event of an error.
+     */
+    private _onRefreshServersSubscription?: Subscription;
+
+    /** Indicates the search box is enabled. */
+    public searchEnabled = false;
+
+    /** The subject to handle search input changes */
+    private _searchInputChange = new Subject<string | null>();
+
     public readonly settings$ = this._clientSettingsStore.settings$;
+
+    /** Indicates at what media query size server rows are expected to be fully expanded. */
+    public get expandListMediaQuerySize(): MediaQuerySize {
+        return this.selectedServer ? 'xl' : 'md';
+    }
 
     public get isMobile() {
         return isMobile();
@@ -68,11 +100,28 @@ export class ServersComponent implements OnInit, AfterViewInit {
         return isWindows();
     }
 
+    public get serverCount$() {
+        return this.vm$.pipe(map((vm) => vm.servers.length));
+    }
+
     constructor(
+        private readonly _appSettingsStore: AppSettingsStore,
         private readonly _serversStore: ServersStore,
         private readonly _clientSettingsStore: ClientSettingsStore,
-        private readonly _modalService: ModalService,
-    ) {}
+        private readonly _serverHubStore: ServerHubStore,
+        private readonly _pingStore: PingStore,
+    ) {
+        // Subscribe to search input changes and fetch the new id list based on the search query.
+        this._searchInputChange
+            .pipe(
+                debounceTime(400),
+                map((value) => value || ''),
+                distinctUntilChanged(),
+            )
+            .subscribe((value) => {
+                this._serversStore.getServerIdsWithSearchString(value);
+            });
+    }
 
     ngOnInit() {
         // Handle any errors coming from the store.
@@ -81,31 +130,94 @@ export class ServersComponent implements OnInit, AfterViewInit {
                 return;
             }
 
-            this._virtualScrollViewportSubscription?.unsubscribe();
+            this.onSubscriptionError(vm.error);
+        });
 
-            console.warn('There was an issue with one or more servers during fetching.');
-            console.error(vm.error);
+        // Handle any errors coming from the SignalR connection.
+        this._serverHubStore.vm$.subscribe((vm) => {
+            if (!vm.error) {
+                return;
+            }
+
+            this.onSubscriptionError(vm.error);
         });
 
         this._serversStore.getServerIds();
+
+        // Handle signalR signal to refresh the server list.
+        this._onRefreshServersSubscription = this._serverHubStore.onRefreshServers.subscribe(() => {
+            console.log('Server list refresh triggered.');
+            this.selectedServer = null;
+            this._serversStore.getServerIds();
+            this._pingStore.getPing(this._appSettingsStore.settings.pingProtocol);
+        });
     }
 
     ngAfterViewInit() {
-        this._virtualScrollViewportSubscription = this.virtualScrollViewport.renderedRangeStream.subscribe((range) => this.onVirtualListChange(range));
+        this._virtualScrollViewportSubscription = this.virtualScrollViewport.renderedRangeStream.pipe(withLatestFrom(this.vm$)).subscribe((args) => {
+            let range = args[0];
+            const vm = args[1];
+            const servers = vm.servers;
+
+            if (vm.servers.length == 0) {
+                return;
+            }
+
+            // Determine direction
+            const firstIndex = range.start;
+            const direction = firstIndex < this._firstIndexOnLastRender ? 'up' : 'down';
+            this._firstIndexOnLastRender = firstIndex;
+
+            // The directions implement sort of the same system.
+            // For readability they have been split.
+            // Determine what index to start, and what index to end.
+            // One index is based on when the first fetchable index can be found.
+            // The other is the last index that might be fetched.
+            // After that a take is determined. If this take is too low the fetch won't happen.
+            if (direction === 'down') {
+                const startIndex = servers.findIndex((server, index, _) => index >= range.start && !server.fetching && server.state === 'id');
+                if (startIndex == -1) {
+                    return;
+                }
+
+                const endIndex = Math.min(range.end + this._serverAdditionalFetchAmount, servers.length);
+                var reachedEnd = endIndex == servers.length;
+
+                range = { start: startIndex, end: endIndex };
+                var take = range.end - range.start;
+            } else {
+                const endIndex = servers.findLastIndex((server, index, _) => index <= range.end && !server.fetching && server.state === 'id');
+                if (endIndex == -1) {
+                    return;
+                }
+
+                const startIndex = Math.max(range.start - this._serverAdditionalFetchAmount, 0);
+                var reachedEnd = startIndex == 0;
+
+                range = { start: startIndex, end: endIndex + 1 };
+                var take = range.end - range.start;
+            }
+
+            // Take must be a minimum unless we reached the end of the collection.
+            if (!reachedEnd && take < this._serverMinimumFetchAmount) {
+                return;
+            }
+
+            //console.log('Final fetch range', range);
+            //console.log('Take', take);
+
+            // The servers being fetched should indicate they are being fetched.
+            for (const server of servers.slice(range.start, range.end)) {
+                server.fetching = true;
+            }
+
+            this._serversStore.updateListedServersByRange(range);
+        });
     }
 
     public trackByItemId(index: number, item: Server) {
         //console.log(index);
         return item.id;
-    }
-
-    public onVirtualListChange(range: ListRange) {
-        // Determine direction
-        const firstIndex = range.start;
-        const direction = firstIndex < this._firstIndexOnLastRender ? 'up' : 'down';
-        this._firstIndexOnLastRender = firstIndex;
-
-        this._serversStore.updateListedServersByRangeAndDirection({ range, direction });
     }
 
     public onServerClicked(server: Server) {
@@ -122,21 +234,23 @@ export class ServersComponent implements OnInit, AfterViewInit {
         this.selectedServer = null;
     }
 
-    public openLearnMoreScheme() {
-        this._modalService.openModal(LearnMoreSchemeComponent);
+    public toggleSearchInput() {
+        this.searchEnabled = !this.searchEnabled;
+        if (!this.searchEnabled) {
+            this._searchInputChange.next('');
+        }
     }
 
-    public openConfigureScheme() {
-        this._modalService.openModal(ConfigureSchemeComponent);
+    public onSearchInputChange(event: Event) {
+        const value = (event.target as HTMLInputElement).value;
+        this._searchInputChange.next(value);
     }
 
-    public hasConfiguredSomething(settings: z.infer<typeof clientSettingsSchema>) {
-        return (
-            !!settings.doomseekerLocation ||
-            !!settings.iwadsLocation ||
-            !!settings.pwadsLocation ||
-            !!settings.qZandronumLocation ||
-            !!settings.zandronumLocation
-        );
+    private onSubscriptionError(error: Error) {
+        this._virtualScrollViewportSubscription?.unsubscribe();
+        this._onRefreshServersSubscription?.unsubscribe();
+
+        console.warn('There was an issue with one of the stores.');
+        console.error(error);
     }
 }

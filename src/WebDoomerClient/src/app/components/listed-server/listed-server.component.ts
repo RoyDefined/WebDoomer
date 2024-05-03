@@ -5,6 +5,8 @@ import { StopPropagationDirective } from '../../directives/stop-propagation-dire
 import { ToolTipDirective } from '../../directives/tooltip-directive';
 import { isMobile } from '../../utils/isMobile';
 import { isWindows } from '../../utils/isWindows';
+import { MediaQuerySize } from '../../utils/media-query-size';
+import { formatString } from '../../utils/stringUtils';
 
 @Component({
     standalone: true,
@@ -15,12 +17,13 @@ import { isWindows } from '../../utils/isWindows';
 export class ListedServerComponent implements OnChanges {
     @Input({ required: true }) server!: Server;
     @Input({ required: true }) selected!: Boolean;
+    @Input({ required: true }) expandListMediaQuerySize!: MediaQuerySize;
     @Output() clicked = new EventEmitter<Server>();
 
     public get engineUrl() {
         let engine = this.server.engine;
 
-        // TODO: improve this check.
+        // TODO: improve this check with an actual enum.
         const engineFileName = engine === 0 ? 'zandronumsmall' : 'qzandronumsmall';
         const url = `assets/engines/${engineFileName}.png`;
         return url;
@@ -38,32 +41,81 @@ export class ListedServerComponent implements OnChanges {
         return countryFlagurl;
     }
 
+    public get passwordUrl() {
+        const baseUrl = 'assets/password/{0}-pass-required.png';
+        const forcePassword = this.server.forcePassword;
+        const forceJoinPassword = this.server.forceJoinPassword;
+        return forcePassword && forceJoinPassword
+            ? formatString(baseUrl, 'both')
+            : forcePassword
+              ? formatString(baseUrl, 'connect')
+              : forceJoinPassword
+                ? formatString(baseUrl, 'join')
+                : '';
+    }
+
+    public get passwordTip() {
+        const forcePassword = this.server.forcePassword;
+        const forceJoinPassword = this.server.forceJoinPassword;
+        return forcePassword && forceJoinPassword
+            ? 'This server enforces both a connect and join password.'
+            : forcePassword
+              ? 'This server enforces a connect password.'
+              : forceJoinPassword
+                ? 'This server enforces a join password.'
+                : 'This server does not enforce any type of password.';
+    }
+
+    public get voiceUrl() {
+        const baseUrl = 'assets/voice/voice-{0}.png';
+        return this.server.voiceChatType === 1
+            ? formatString(baseUrl, 'all')
+            : this.server.voiceChatType === 2
+              ? formatString(baseUrl, 'team')
+              : this.server.voiceChatType === 3
+                ? formatString(baseUrl, 'spectator')
+                : formatString(baseUrl, 'none');
+    }
+
+    public get voiceTip() {
+        return this.server.voiceChatType === 1
+            ? 'Voice chat is enabled for everybody.'
+            : this.server.voiceChatType === 2
+              ? 'Voice chat is enabled but players can only chat with their teammates.'
+              : this.server.voiceChatType === 3
+                ? 'Voice chat is enabled but players and spectators can only chat separately.'
+                : 'Voice chat is either disabled, not specified or the server does not support it.';
+    }
+
+    public get clientCount() {
+        return (this.server.playingClientCount || 0) + (this.server.spectatingClientCount || 0);
+    }
+
     public get playerCountTitle() {
-        const clientCount = (this.server.playingClientCount || 0) + (this.server.spectatingClientCount || 0);
-        const botCount = this.server.botCount || 0;
-        const slots = this.server.maxClients || 0;
+        const botCount = this.server.botCount;
+        const slots = this.server.maxClients;
         let title = 'This server has ';
 
-        if (clientCount == 0 && botCount == 0) {
+        if (this.clientCount == 0 && botCount == 0) {
             title += 'no players.';
             return title;
         }
 
-        if (clientCount > 0) {
-            title += clientCount + ' player' + (clientCount > 1 ? 's' : '');
+        if (this.clientCount > 0) {
+            title += this.clientCount + ' player' + (this.clientCount > 1 ? 's' : '');
         } else {
             title += 'no clients';
         }
 
         title += ' and ';
 
-        if (botCount > 0) {
+        if (botCount && botCount > 0) {
             title += botCount + ' bot' + (botCount > 1 ? 's' : '');
         } else {
             title += 'no bots';
         }
 
-        if (slots) {
+        if (slots && slots > 0) {
             title += ' out of the available ' + slots + ' slot' + (slots > 1 ? 's' : '');
         }
 

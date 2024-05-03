@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { ServerHubStore } from './stores/signalr/server-hub.store';
 
 @Component({
     standalone: true,
@@ -7,4 +8,9 @@ import { RouterModule } from '@angular/router';
     template: `<router-outlet></router-outlet>`,
     imports: [RouterModule],
 })
-export class AppComponent {}
+export class AppComponent implements OnInit {
+    constructor(private readonly _serverHubStore: ServerHubStore) {}
+    ngOnInit() {
+        this._serverHubStore.startConnection();
+    }
+}

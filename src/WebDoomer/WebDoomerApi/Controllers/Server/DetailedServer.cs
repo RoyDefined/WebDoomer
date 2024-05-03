@@ -7,6 +7,9 @@ using WebDoomer.Zandronum;
 
 namespace WebDoomerApi.Services;
 
+/// <summary>
+/// Represents a server variant that contains all information for a detailed server view.
+/// </summary>
 public sealed record DetailedServer(
 	string Id,
 	EngineType Engine,

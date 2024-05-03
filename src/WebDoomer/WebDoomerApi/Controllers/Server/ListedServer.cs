@@ -1,7 +1,11 @@
-﻿using WebDoomerApi.Services;
+﻿using WebDoomer.Zandronum;
+using WebDoomerApi.Services;
 
 namespace WebDoomerApi.Controllers;
 
+/// <summary>
+/// Represents a server variant that contains information suitable for a list.
+/// </summary>
 public sealed record ListedServer(
 	string Id,
 	EngineType Engine,
@@ -10,7 +14,10 @@ public sealed record ListedServer(
 	int? SpectatingClientCount,
 	int? BotCount,
 	byte? MaxClients,
-	string? Country)
+	bool? ForcePassword,
+	bool? ForceJoinPassword,
+	string? Country,
+	VoiceChatType? VoiceChatType)
 {
 	internal static ListedServer Create(ProvidedServer server)
 	{
@@ -22,6 +29,9 @@ public sealed record ListedServer(
 			server.SpectatingClientCount,
 			server.BotCount,
 			server.MaxClients,
-			server.Country);
+			server.ForcePassword,
+			server.ForceJoinPassword,
+			server.Country,
+			server.VoiceChatType);
 	}
 }
