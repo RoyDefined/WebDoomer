@@ -1,19 +1,33 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Sockets;
 using WebDoomer.Packets;
 
 namespace WebDoomer.Zandronum;
 
-internal class ZandronumMasterServerService : IZandronumMasterServerService
+internal class ZandronumMasterServerService : IZandronumMasterServerService, IDisposable
 {
 	/// <inheritdoc cref="ILogger"/>
 	protected readonly ILogger _logger;
 
+	/// <summary>
+	/// The service's options.
+	/// </summary>
+	private WebDoomerOptions _options;
+
+	/// <summary>
+	/// The service's option listener.
+	/// </summary>
+	private readonly IDisposable? _optionsMonitorListener;
+
 	public ZandronumMasterServerService(
-		ILogger<ZandronumMasterServerService> logger)
+		ILogger<ZandronumMasterServerService> logger,
+		IOptionsMonitor<WebDoomerOptions> optionsMonitor)
 	{
 		this._logger = logger;
+		this._options = optionsMonitor.CurrentValue;
+		this._optionsMonitorListener = optionsMonitor.OnChange(this.OptionsMonitorOnChangeListener);
 	}
 
 	/// <inheritdoc />
@@ -58,24 +72,20 @@ internal class ZandronumMasterServerService : IZandronumMasterServerService
 		this._logger.LogDebug("Fetching server hosts from master server {IPEndpoint}.", endPoint.ToString());
 
 		using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-		var packet = new HuffmanPacket()
+		var packet = new HuffmanPacket(sizeof(int) + sizeof(short))
 			.Write(PacketData.LauncherMasterChallenge)
 			.Write(PacketData.MasterServerVersion);
 
 		socket.SendTo(packet, endPoint);
+		var timeoutTask = Task.Delay(this._options.MasterServer.FetchTaskTimeout, CancellationToken.None);
 
 		var builder = new MasterServerResultBuilder();
 		while (true)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
-			// TODO: set max size.
-			var bufferData = new byte[9999];
-			this._logger.LogDebug("Retrieving from socket.");
-
-			// Retrieve with timeout to avoid waiting forever for a response.
+			var bufferData = new byte[this._options.MasterServer.MaximumPacketSize];
 			var socketResultTask = socket.ReceiveFromAsync(bufferData, endPoint, cancellationToken).AsTask();
-			var timeoutTask = Task.Delay(8000, CancellationToken.None);
 
 			// Check if request timed out.
 			var resultTask = await Task.WhenAny(socketResultTask, timeoutTask)
@@ -101,5 +111,17 @@ internal class ZandronumMasterServerService : IZandronumMasterServerService
 
 			return builder.Build(false);
 		}
+	}
+
+	private void OptionsMonitorOnChangeListener(WebDoomerOptions options, string? _)
+	{
+		this._logger.LogDebug("Settings update observed.");
+		this._options = options;
+	}
+
+	/// <inheritdoc />
+	public void Dispose()
+	{
+		this._optionsMonitorListener?.Dispose();
 	}
 }

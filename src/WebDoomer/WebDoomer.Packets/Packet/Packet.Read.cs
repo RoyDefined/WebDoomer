@@ -146,7 +146,14 @@ public partial class Packet
     {
         try
         {
-            return Encoding.ASCII.GetString(this.GetBytes(length).ToArray());
+			var @string = Encoding.ASCII.GetString(this.GetBytes(length).ToArray());
+
+			if (updateReadPosition)
+			{
+				this._readPosition += @string.Length;
+			}
+
+			return @string;
         }
         catch (InvalidOperationException exception)
         {

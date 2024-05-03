@@ -1,9 +1,9 @@
 <div
-    class="flex h-10 gap-2 px-4 py-2 aria-[selected='true']:bg-gray-200 aria-[selected='false']:hover:bg-gray-300 aria-[selected='true']:dark:bg-gray-900 aria-[selected='false']:dark:hover:bg-gray-600"
+    [className]="
+        'flex h-10 cursor-pointer gap-1 px-4 py-2 aria-[selected=true]:bg-gray-200 aria-[selected=false]:hover:bg-gray-300 aria-[selected=true]:dark:bg-gray-900 aria-[selected=false]:dark:hover:bg-gray-600 group expand-at-' +
+        this.expandListMediaQuerySize
+    "
     [attr.aria-selected]="this.selected"
-    [ngClass]="{
-        'cursor-pointer': !server.fetching
-    }"
 >
     @if (server.fetching || server.state === 'id') {
         <div class="grow animate-pulse">
@@ -21,27 +21,60 @@
             {{ server.name }}
         </div>
 
-        <div class="flex w-40 flex-wrap justify-end gap-1" [tooltip]="playerCountTitle">
+        <!-- Minimum width still allows the tooltip to trigger with no players. -->
+        <div class="flex min-w-10 justify-end" [tooltip]="playerCountTitle">
             <span class="sr-only">{{ playerCountTitle }}</span>
 
-            @if (server.playingClientCount) {
-                <span *ngFor="let item of [].constructor(server.playingClientCount)" class="min-w-3 bg-green-500"></span>
-            }
-            @if (server.spectatingClientCount) {
-                <span *ngFor="let item of [].constructor(server.spectatingClientCount)" class="min-w-3 bg-green-500 opacity-30"></span>
-            }
-            @if (server.botCount) {
-                <span
-                    *ngFor="let item of [].constructor(server.botCount)"
-                    class="pattern-rectangles min-w-3 pattern-slate-500 pattern-opacity-100 pattern-size-1"
+            <!-- Player icons to indicate count. Replaced with numbers if there isn't much room. -->
+            <div
+                class="hidden max-w-40 flex-wrap justify-end gap-1 group-[.expand-at-sm]:sm:flex group-[.expand-at-md]:md:flex group-[.expand-at-lg]:lg:flex group-[.expand-at-xl]:xl:flex group-[.expand-at-2xl]:2xl:flex"
+            >
+                @if (server.playingClientCount) {
+                    <span *ngFor="let item of [].constructor(server.playingClientCount)" class="min-w-3 bg-green-500"></span>
+                }
+                @if (server.spectatingClientCount) {
+                    <span *ngFor="let item of [].constructor(server.spectatingClientCount)" class="min-w-3 bg-green-500 opacity-30"></span>
+                }
+                @if (server.botCount) {
+                    <span
+                        *ngFor="let item of [].constructor(server.botCount)"
+                        class="pattern-rectangles min-w-3 pattern-slate-500 pattern-opacity-100 pattern-size-1"
+                    >
+                    </span>
+                }
+            </div>
+
+            <!-- Player numbers to indicate count. Replaces the icons if there isn't much room. -->
+            @if (clientCount) {
+                <div
+                    class="block content-center text-sm font-bold group-[.expand-at-sm]:sm:hidden group-[.expand-at-md]:md:hidden group-[.expand-at-lg]:lg:hidden group-[.expand-at-xl]:xl:hidden group-[.expand-at-2xl]:2xl:hidden"
                 >
-                </span>
+                    <span>{{ clientCount }}</span>
+                    @if (server.maxClients) {
+                        <span>/{{ server.maxClients }}</span>
+                    }
+                </div>
             }
+        </div>
+
+        <div class="relative h-6 min-w-6" [tooltip]="passwordTip">
+            @if (server.forcePassword || server.forceJoinPassword) {
+                <img [ngSrc]="passwordUrl" class="object-contain" fill />
+            }
+        </div>
+
+        <div class="relative h-6 min-w-6" [tooltip]="voiceTip">
+            <img [ngSrc]="voiceUrl" class="object-contain" fill />
         </div>
     }
 
     @if (isWindows && !isMobile) {
-        <a stop-propagation [href]="'zan://' + server.ip + ':' + server.port" class="button highlight ml-3 min-w-32 self-center text-center" type="button">
+        <a
+            stop-propagation
+            [href]="'zan://' + server.ip + ':' + server.port"
+            class="button highlight min-w-12 self-center text-center group-[.expand-at-sm]:sm:min-w-32 group-[.expand-at-md]:md:min-w-32 group-[.expand-at-lg]:lg:min-w-32 group-[.expand-at-xl]:xl:min-w-32 group-[.expand-at-2xl]:2xl:min-w-32"
+            type="button"
+        >
             Join
         </a>
     }

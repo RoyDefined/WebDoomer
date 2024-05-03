@@ -19,7 +19,10 @@ internal static class PacketExtension
 			_ = packet
 				.Write(PacketData.ServerQueryNewLauncherChallenge)
 				.Write((uint)flagset0)
+
+				// Value is written later to properly determine ping.
 				.Write(0)
+
 				.Write((uint)flagset1);
 		}
 		else
@@ -27,7 +30,10 @@ internal static class PacketExtension
 			_ = packet
 				.Write(PacketData.ServerQueryOldLauncherChallenge)
 				.Write((uint)flagset0)
+
+				// Value is written later to properly determine ping.
 				.Write(0)
+
 				.Write((uint)flagset1);
 
 			if (protocolType == LauncherProtocolType.OldProtocolSegmented)

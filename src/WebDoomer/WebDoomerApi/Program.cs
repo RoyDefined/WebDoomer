@@ -5,6 +5,8 @@ using WebDoomer;
 using WebDoomerApi.Services;
 using WebDoomerApi.RateLimit;
 using Microsoft.AspNetCore.HttpOverrides;
+using WebDoomerApi.SignalR;
+
 
 
 #if DEBUG
@@ -40,15 +42,18 @@ try
 	_ = builder.Services.AddCors();
 #endif
 
+	// SignalR
+	_ = builder.Services.AddSignalRServerHub();
+
 	// WebDoomer
-	_ = builder.Services.AddWebDoomer();
+	_ = builder.Services.AddWebDoomer(builder.Configuration, "WebDoomerOptions");
 
 	// Rate limiting
 	_ = builder.Services.AddResponseSizeRateLimiting();
 
 	// Scheduler
 	_ = builder.Services.AddSingleton<ServerDataFetchJob>();
-	_ = builder.Services.AddServerDataProvider();
+	_ = builder.Services.AddServerDataProvider(builder.Configuration, "ApiOptions");
 	_ = builder.Services.AddScheduling();
 }
 catch (Exception ex)
@@ -79,6 +84,9 @@ try
     app.UseDefaultFiles();
     app.UseStaticFiles();
 #endif
+
+	// SignalR
+	_ = app.UseSignalRServerHub();
 
 	_ = app.MapControllers();
 

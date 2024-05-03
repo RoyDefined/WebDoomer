@@ -1,4 +1,5 @@
 import { Directive, ElementRef, HostListener, Input, Renderer2 } from '@angular/core';
+import { clamp } from '../utils/numberUtils';
 
 @Directive({
     standalone: true,
@@ -42,7 +43,7 @@ export class ToolTipDirective {
     }
 
     private createTooltipElement(text: string) {
-        const tooltip = this._renderer.createElement('span') as HTMLSpanElement;
+        const tooltip = this._renderer.createElement('div') as HTMLDivElement;
         this._renderer.appendChild(tooltip, this._renderer.createText(text));
         this._renderer.appendChild(document.body, tooltip);
 
@@ -50,6 +51,8 @@ export class ToolTipDirective {
         tooltip.style.position = 'absolute';
         tooltip.style.zIndex = '1000';
         tooltip.style.fontSize = '14px';
+        tooltip.style.width = 'fit-content';
+        tooltip.style.height = 'fit-content';
         tooltip.style.maxWidth = '15rem';
         tooltip.style.textAlign = 'center';
         tooltip.style.background = '#282a36';
@@ -112,8 +115,12 @@ export class ToolTipDirective {
             left = hostPos.right + this.offset;
         }
 
+        top += scrollPos;
+        top = clamp(top, 0, window.innerHeight - tooltipPos.height);
+        left = clamp(left, 0, window.innerWidth - tooltipPos.width);
+
         return {
-            top: top + scrollPos,
+            top,
             left,
         };
     }

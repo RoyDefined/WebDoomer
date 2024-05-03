@@ -1,16 +1,5 @@
 <ng-template #settingsIcon>
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="feather feather-settings"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6">
         <circle cx="12" cy="12" r="3"></circle>
         <path
             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
@@ -45,35 +34,99 @@
     </svg>
 </ng-template>
 
-<nav class="flex h-14 bg-gray-100 p-3 pl-3 shadow dark:bg-gray-700">
-    <a class="default-text-color-highlight relative h-full w-16 cursor-pointer content-center pl-14 font-bold" [routerLink]="['/']">
-        <img ngSrc="assets/logo1.png" class="object-contain" fill priority />WebDoomer
-    </a>
+<nav class="min-h-14 bg-gray-100 p-3 pb-1 pl-3 shadow dark:bg-gray-700">
+    <div class="flex">
+        <div class="flex flex-grow">
+            <a class="default-text-color-highlight relative mr-[6.5rem] h-8 w-8 cursor-pointer content-center pl-14 font-bold" [routerLink]="['/']">
+                <img ngSrc="assets/logo/logo1.png" class="object-contain" fill priority />WebDoomer
+            </a>
 
-    <div class="flex flex-grow items-center">
-        <!-- Optional content -->
-    </div>
-    <div class="flex gap-1">
-        @if (isWindows && !isMobile) {
-            <button (click)="openConfigureScheme()" class="button">
-                <ng-container>
-                    <ng-container *ngTemplateOutlet="settingsIcon"></ng-container>
-                </ng-container>
-            </button>
-        }
+            @if (vm$ | async; as vm) {
+                <div [tooltip]="vm.loading ? 'Loading...' : getPingMessage(vm.item)" placement="bottom">
+                    @if (getPingState(vm.item); as state) {
+                        <span
+                            class="mr-3 flex h-2 w-2 rounded-full"
+                            [ngClass]="{
+                                'bg-gray-500': vm.loading,
+                                'bg-red-500': !state || state === 'Unhealthy',
+                                'bg-yellow-500': state === 'Degraded',
+                                'bg-green-500': state === 'Healthy'
+                            }"
+                        ></span>
+                    }
+                </div>
+            }
 
-        @if (settings$ | async; as settings) {
-            <button (click)="toggleDarkMode(settings.darkModeType || 'System')" class="button">
-                <ng-container *ngIf="!settings.darkModeType || settings.darkModeType === 'System'">
-                    <ng-container *ngTemplateOutlet="desktopIcon"></ng-container>
-                </ng-container>
-                <ng-container *ngIf="settings.darkModeType === 'Light'">
-                    <ng-container *ngTemplateOutlet="sunIcon"></ng-container>
-                </ng-container>
-                <ng-container *ngIf="settings.darkModeType === 'Dark'">
-                    <ng-container *ngTemplateOutlet="moonIcon"></ng-container>
-                </ng-container>
-            </button>
-        }
+            <ng-template *ngIf="headerLeftRef" [ngTemplateOutlet]="headerLeftRef"> </ng-template>
+        </div>
+        <div class="flex w-auto flex-row items-start gap-1">
+            <ng-template *ngIf="headerRightRef" [ngTemplateOutlet]="headerRightRef"> </ng-template>
+
+            <div class="flex gap-1">
+                @if (isWindows && !isMobile) {
+                    <button (click)="openConfigureScheme()" class="button">
+                        <ng-container>
+                            <ng-container *ngTemplateOutlet="settingsIcon"></ng-container>
+                        </ng-container>
+                    </button>
+                }
+
+                @if (settings$ | async; as settings) {
+                    <button (click)="toggleDarkMode(settings.darkModeType || 'System')" class="button">
+                        <ng-container *ngIf="!settings.darkModeType || settings.darkModeType === 'System'">
+                            <ng-container *ngTemplateOutlet="desktopIcon"></ng-container>
+                        </ng-container>
+                        <ng-container *ngIf="settings.darkModeType === 'Light'">
+                            <ng-container *ngTemplateOutlet="sunIcon"></ng-container>
+                        </ng-container>
+                        <ng-container *ngIf="settings.darkModeType === 'Dark'">
+                            <ng-container *ngTemplateOutlet="moonIcon"></ng-container>
+                        </ng-container>
+                    </button>
+                }
+            </div>
+        </div>
     </div>
+
+    <ng-template *ngIf="headerBottomRef" [ngTemplateOutlet]="headerBottomRef"> </ng-template>
+
+    @if (shouldShowConfigurationTip$ | async; as shouldShowConfigurationTip) {
+        @if (shouldShowRegistryTip || shouldShowConfigurationTip || shouldShowWindowsOnlyTip) {
+            <div class="default-text-color-highlight flex flex-col gap-1 bg-gray-100 p-1 text-sm font-bold dark:bg-gray-700">
+                @if (shouldShowRegistryTip) {
+                    <div class="ml-5 flex flex-col items-baseline justify-between bg-gray-100 p-1 dark:bg-gray-700 lg:flex-row lg:gap-5">
+                        <span class="text-balance">Joining a server through the web browser requires you to download Doomseeker and associate a url.</span>
+                        <span class="flex gap-1">
+                            <button (click)="openLearnMoreScheme()" class="button w-40">Learn more</button>
+                            <button (click)="hideRegistryTip = true" class="button w-20">Hide</button>
+                        </span>
+                    </div>
+                }
+
+                <!-- Check if anything was configured. If so hide the message because it can be assumed the user can find the configuration. -->
+                @if (shouldShowConfigurationTip) {
+                    <div class="ml-5 flex flex-col items-baseline justify-between bg-gray-100 p-1 dark:bg-gray-700 lg:flex-row lg:gap-5">
+                        <span class="text-balance">Consider configuring your settings to improve the shared data in this application.</span>
+                        <span class="flex gap-1">
+                            <button (click)="openConfigureScheme()" class="button w-32">Configure</button>
+                            <button (click)="hidePersonalConfigurationTip = true" class="button w-20">Hide</button>
+                        </span>
+                    </div>
+                }
+
+                <!--
+                    The user was detected to run a non Windows OS.
+                    I chose not to include mobile devices here because it seems obvious this is not possible.
+                -->
+                @if (shouldShowWindowsOnlyTip) {
+                    <div class="ml-5 flex flex-col items-baseline justify-between bg-gray-100 p-1 dark:bg-gray-700 lg:flex-row lg:gap-5">
+                        <span class="text-balance">Your OS was detected as not being Windows. Joining through the browser is only supported for Windows.</span>
+                        <span class="flex gap-1">
+                            <button (click)="hideWindowsOnlyTip = true" class="button w-20">Hide</button>
+                        </span>
+                    </div>
+                }
+            </div>
+        }
+    }
 </nav>
