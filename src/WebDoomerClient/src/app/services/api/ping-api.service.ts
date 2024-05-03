@@ -20,7 +20,8 @@ export class PingApiService {
         private readonly _appSettingsStore: AppSettingsStore,
     ) {}
 
-    public ping() {
+    public ping(protocol: 'Unix' | 'Timer') {
+        const now = new Date();
         return this._http.get(this.baseUrl + 'ping/', { observe: 'response' }).pipe(
             map((response) => {
                 if (!response.ok) {
@@ -31,14 +32,17 @@ export class PingApiService {
                     throw new Error('Response was not positive.');
                 }
 
+                if (protocol === 'Timer') {
+                    return new Date().getTime() - now.getTime();
+                }
+
                 const pingReceiveTime = response.headers.get('Pingreceivetime');
                 if (!pingReceiveTime) {
                     return null;
                 }
 
-                const parsedPingReceiveTime = parseInt(pingReceiveTime);
-                const currentUnixTime = new Date().getTime();
-                return currentUnixTime - parsedPingReceiveTime;
+                const parsedDate = new Date(parseInt(pingReceiveTime));
+                return new Date().getTime() - parsedDate.getTime();
             }),
         );
     }

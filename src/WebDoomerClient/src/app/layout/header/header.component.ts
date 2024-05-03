@@ -89,13 +89,20 @@ export class HeaderComponent implements OnInit {
 
     public getPingMessage(ping: number | null) {
         const state = this.getPingState(ping);
-        return state === 'Healthy'
-            ? 'Healthy connection'
-            : state === 'Degraded'
-              ? 'Degraded connection'
-              : state === 'Unhealthy'
-                ? 'Unhealthy connection'
-                : 'No connection';
+        const message =
+            state === 'Healthy'
+                ? 'Healthy connection'
+                : state === 'Degraded'
+                  ? 'Degraded connection'
+                  : state === 'Unhealthy'
+                    ? 'Unhealthy connection'
+                    : 'No connection';
+
+        if (!ping) {
+            return message;
+        }
+
+        return message + ` (${ping}ms)`;
     }
 
     public openLearnMoreScheme() {

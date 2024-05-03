@@ -30,7 +30,7 @@ export class PingStore extends ComponentStore<PingStoreState> {
             tap(() => this.setLoading(true)),
             switchMap(() => {
                 this.setItem(null);
-                return this._pingApiService.ping().pipe(
+                return this._pingApiService.ping('Timer').pipe(
                     tapResponse({
                         next: (item) => {
                             this.setItem(item);
