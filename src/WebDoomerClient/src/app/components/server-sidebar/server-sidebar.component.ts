@@ -104,16 +104,22 @@ export class ServerSidebarComponent {
 
     public get voiceUrl() {
         const baseUrl = 'assets/voice/voice-{0}.png';
-        return this.server.voiceChatType === 1 ? formatString(baseUrl, 'all') : formatString(baseUrl, 'limited');
+        return this.server.voiceChatType === 1
+            ? formatString(baseUrl, 'all')
+            : this.server.voiceChatType === 2
+              ? formatString(baseUrl, 'team')
+              : this.server.voiceChatType === 3
+                ? formatString(baseUrl, 'spectator')
+                : '';
     }
 
     public get voiceTip() {
         return this.server.voiceChatType === 1
-            ? 'Voice chat is enabled for everybody.'
+            ? 'Enabled for everybody.'
             : this.server.voiceChatType === 2
-              ? 'Voice chat is enabled but players can only chat with their teammates.'
+              ? 'Enabled between teammates only.'
               : this.server.voiceChatType === 3
-                ? 'Voice chat is enabled but players and spectators can only chat separately.'
+                ? 'Enabled between living/spectators only.'
                 : '';
     }
 

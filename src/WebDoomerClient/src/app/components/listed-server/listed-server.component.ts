@@ -68,7 +68,13 @@ export class ListedServerComponent implements OnChanges {
 
     public get voiceUrl() {
         const baseUrl = 'assets/voice/voice-{0}.png';
-        return this.server.voiceChatType === 1 ? formatString(baseUrl, 'all') : formatString(baseUrl, 'limited');
+        return this.server.voiceChatType === 1
+            ? formatString(baseUrl, 'all')
+            : this.server.voiceChatType === 2
+              ? formatString(baseUrl, 'team')
+              : this.server.voiceChatType === 3
+                ? formatString(baseUrl, 'spectator')
+                : formatString(baseUrl, 'none');
     }
 
     public get voiceTip() {
