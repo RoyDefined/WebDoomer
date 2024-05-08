@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { AppSettingsStore } from '../appsettings/app-settings.store';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { ServerHubStoreState } from './server-hub-store-state';

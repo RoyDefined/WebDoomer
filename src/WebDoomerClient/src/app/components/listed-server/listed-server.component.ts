@@ -1,5 +1,5 @@
 import { CommonModule, NgOptimizedImage } from '@angular/common';
-import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output } from '@angular/core';
 import { Server } from '../../models/server';
 import { StopPropagationDirective } from '../../directives/stop-propagation-directive';
 import { ToolTipDirective } from '../../directives/tooltip-directive';
