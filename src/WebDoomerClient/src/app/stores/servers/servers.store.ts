@@ -86,6 +86,8 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
                                 continue;
                             }
 
+                            // This is possible when loading the server page with a predefined search query.
+                            // Rather than updating with new data, ignore any changes to avoid overlapping different states.
                             if (server.state !== 'id') {
                                 //console.warn(`Server state not 'id' for server with index ${i}.`);
                                 continue;

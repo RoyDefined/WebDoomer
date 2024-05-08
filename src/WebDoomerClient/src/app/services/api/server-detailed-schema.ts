@@ -9,6 +9,7 @@ import { playerSchema } from '../../models/player-schema';
 import { teamSchema } from '../../models/team-schema';
 import { dmFlagSchema } from '../../models/dm-flag-schema';
 import { dehackedNameSchema } from '../../models/dehacked-name-schema';
+import { voiceChatArray } from '../../models/voice-chat';
 
 /**
  * Represents the fetch result of detailed server.
@@ -52,6 +53,7 @@ export const serverDetailedSchema = z
         securitySettings: z.boolean().nullable(),
         dehackedNameCollection: dehackedNameSchema.array().nullable(),
         country: z.string().min(1).nullable(),
+        voiceChatType: z.number().nonnegative().lte(voiceChatArray.length).nullable(),
         gameModeName: z.string().min(1).nullable(),
         gameModeShortName: z.string().min(1).nullable(),
     })

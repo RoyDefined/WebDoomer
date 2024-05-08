@@ -92,22 +92,25 @@ export class Server implements z.infer<typeof serverSchema> {
 
         this.engine = data.engine;
         this.name = data.name;
-        this.url = data.url;
-        this.email = data.email;
-        this.mapName = data.mapName;
-        this.maxClients = data.maxClients;
-        this.maxPlayers = data.maxPlayers;
         this.playingClientCount = data.playingClientCount;
         this.spectatingClientCount = data.spectatingClientCount;
         this.botCount = data.botCount;
+        this.maxClients = data.maxClients;
+        this.forcePassword = data.forcePassword;
+        this.forceJoinPassword = data.forceJoinPassword;
+        this.country = data.country;
+        this.voiceChatType = data.voiceChatType;
+
+        this.url = data.url;
+        this.email = data.email;
+        this.mapName = data.mapName;
+        this.maxPlayers = data.maxPlayers;
         this.pwadCollection = data.pwadCollection;
         this.gameType = data.gameType;
         this.gameTypeInstagib = data.gameTypeInstagib;
         this.gameTypeBuckshot = data.gameTypeBuckshot;
         this.gameNameType = data.gameNameType;
         this.iwad = data.iwad;
-        this.forcePassword = data.forcePassword;
-        this.forceJoinPassword = data.forceJoinPassword;
         this.gameSkillType = data.gameSkillType;
         this.botSkillType = data.botSkillType;
         this.fragLimit = data.fragLimit;
@@ -125,7 +128,7 @@ export class Server implements z.infer<typeof serverSchema> {
         this.dmFlagCollection = data.dmFlagCollection;
         this.securitySettings = data.securitySettings;
         this.dehackedNameCollection = data.dehackedNameCollection;
-        this.country = data.country;
+
         this.gameModeName = data.gameModeName;
         this.gameModeShortName = data.gameModeShortName;
 
