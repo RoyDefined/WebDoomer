@@ -31,9 +31,9 @@ public class ServerController : ControllerBase
 	/// <param name="search">An optional search string that specifies what a server name must contain to be returned.</param>
 	/// <returns>A collection of <see cref="string"/> that represents the ids of the servers.</returns>
 	[HttpGet("ids")]
-	public IActionResult GetServerIds(OrderByType orderBy, string? search = null)
+	public IActionResult GetServerIds(OrderByType orderBy = OrderByType.PlayersDescending, string? search = null)
 	{
-		var result = this._serverDataProvider.GetServerIds(orderBy, search);
+		var result = this._serverDataProvider.GetServerIds(search, orderBy);
 		return base.Ok(result);
 	}
 
@@ -46,9 +46,9 @@ public class ServerController : ControllerBase
 	/// <param name="search">An optional search string that specifies what a server name must contain to be returned.</param>
 	/// <returns>A collection of <see cref="ListedServer"/>.</returns>
 	[HttpGet("range")]
-	public IActionResult GetServersRange(OrderByType orderBy, int skip = 0, int take = int.MaxValue, string? search = null)
+	public IActionResult GetServersRange(OrderByType orderBy = OrderByType.PlayersDescending, int skip = 0, int take = int.MaxValue, string? search = null)
 	{
-		var result = this._serverDataProvider.GetServersRange(orderBy, skip, take, search);
+		var result = this._serverDataProvider.GetServersRange(search, skip, take, orderBy);
 		var listedServers = result.Select(ListedServer.Create);
 		return base.Ok(listedServers);
 	}

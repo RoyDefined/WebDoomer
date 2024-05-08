@@ -2,6 +2,7 @@
 using Sqids;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Net;
 using WebDoomer.QZandronum;
 using WebDoomer.Zandronum;
@@ -161,37 +162,83 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider, IDispo
 	}
 
 	/// <inheritdoc />
-	public IEnumerable<ProvidedServer> GetServersRange(OrderByType orderBy, int skip, int take, string? search)
-	{
-		var servers = this.GetServers(orderBy, search);
-
-		// Skip gets maxed to 0 so there's no negative result.
-		// Take is clamped between 0 and a maximum value.
-		skip = Math.Max(skip, 0);
-		take = Math.Clamp(take, 0, 1000);
-
-		var serverRange = servers
-			.Skip(skip)
-			.Take(take)
-			.ToArray();
-
-		return serverRange;
-	}
-
-	/// <inheritdoc />
 	public ProvidedServer? GetServerByIdOrDefault(string id)
 	{
 		return this.Servers.SingleOrDefault(x => x.Id == id);
 	}
 
 	/// <inheritdoc />
-	public IEnumerable<string> GetServerIds(OrderByType orderBy, string? search)
+	public string? GetServerId(IPEndPoint search)
 	{
-		var servers = this.GetServers(orderBy, search);
+		// Order type doesn't matter since a single server is expected.
+		var servers = this.GetServersOrdered(OrderByType.PlayersDescending);
+		servers = this.FilterServers(servers, search);
+
+		var serversList = servers.ToList();
+		Debug.Assert(serversList.Count <= 1);
+
+		return serversList.FirstOrDefault()?.Id;
+	}
+
+	/// <inheritdoc />
+	public IEnumerable<string> GetServerIds(string? search = null, OrderByType orderBy = OrderByType.PlayersDescending)
+	{
+		var servers = this.GetServersOrdered(orderBy);
+		if (search != null)
+		{
+			servers = this.FilterServers(servers, search);
+		}
+
 		return servers.Select(x => x.Id);
 	}
 
-	private IEnumerable<ProvidedServer> GetServers(OrderByType orderBy, string? search)
+	/// <inheritdoc />
+	public IEnumerable<string> GetServerIds(IPAddress search, OrderByType orderBy = OrderByType.PlayersDescending)
+	{
+		var servers = this.GetServersOrdered(orderBy);
+		servers = this.FilterServers(servers, search);
+
+		return servers.Select(x => x.Id);
+	}
+
+	/// <inheritdoc />
+	public ProvidedServer? GetServersRange(IPEndPoint search)
+	{
+		// Order type doesn't matter since a single server is expected.
+		var servers = this.GetServersOrdered(OrderByType.PlayersDescending);
+		servers = this.FilterServers(servers, search);
+
+		var serversList = servers.ToList();
+		Debug.Assert(serversList.Count <= 1);
+
+		return serversList.FirstOrDefault();
+	}
+
+	/// <inheritdoc />
+	public IEnumerable<ProvidedServer> GetServersRange(string? search = null, int skip = 0, int take = 0, OrderByType orderBy = OrderByType.PlayersDescending)
+	{
+		var servers = this.GetServersOrdered(orderBy);
+
+		if (search != null)
+		{
+			servers = this.FilterServers(servers, search);
+		}
+
+		servers = this.SkipTakeServers(servers, skip, take);
+		return servers;
+	}
+
+	/// <inheritdoc />
+	public IEnumerable<ProvidedServer> GetServersRange(IPAddress search, int skip = default, int take = default, OrderByType orderBy = OrderByType.PlayersDescending)
+	{
+		var servers = this.GetServersOrdered(orderBy);
+		servers = this.FilterServers(servers, search);
+
+		servers = this.SkipTakeServers(servers, skip, take);
+		return servers;
+	}
+
+	private IEnumerable<ProvidedServer> GetServersOrdered(OrderByType orderBy)
 	{
 		var servers = this.Servers
 			.OrderByDescending(x => x.Name == null ? 0 : 1);
@@ -205,14 +252,40 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider, IDispo
 			_ => this.Servers,
 		};
 
-		if (search != null)
-		{
-			result = result.Where(x => x.Name != null && x.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
-		}
-
 		return result;
 	}
 
+	private IEnumerable<ProvidedServer> FilterServers(IEnumerable<ProvidedServer> servers, string search)
+	{
+		return servers.Where(x => x.Name != null && x.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
+	}
+
+	private IEnumerable<ProvidedServer> FilterServers(IEnumerable<ProvidedServer> servers, IPAddress search)
+	{
+		return servers.Where(x => x.EndPoint.Address.Equals(search));
+	}
+
+	private IEnumerable<ProvidedServer> FilterServers(IEnumerable<ProvidedServer> servers, IPEndPoint search)
+	{
+		return servers.Where(x => x.EndPoint.Equals(search));
+	}
+
+	private IEnumerable<ProvidedServer> SkipTakeServers(IEnumerable<ProvidedServer> servers, int skip, int take)
+	{
+		if (take <= 0)
+		{
+			take = 100;
+		}
+
+		// Skip gets maxed to 0 so there's no negative result.
+		// Take is clamped between 0 and a maximum value.
+		skip = Math.Max(skip, 0);
+		take = Math.Clamp(take, 0, 1000);
+
+		return servers
+			.Skip(skip)
+			.Take(take);
+	}
 
 	private ReadOnlyCollection<ProvidedServer> LazyGetServers()
 	{

@@ -1,5 +1,6 @@
 ﻿using Sqids;
 using System.Collections.ObjectModel;
+using System.Net;
 using System.Runtime.CompilerServices;
 using WebDoomer.Zandronum;
 
@@ -12,6 +13,7 @@ namespace WebDoomerApi.Services;
 /// Represents a server provided by the provider to send over the network.
 /// </summary>
 public sealed record ProvidedServer(
+	IPEndPoint EndPoint,
 	string Id,
 	EngineType Engine,
 	int? PlayingClientCount,
@@ -69,6 +71,7 @@ public sealed record ProvidedServer(
 		var botCount = result.PlayerDataCollection?.Count(x => x.IsBot);
 
 		return new(
+			result.EndPoint,
 			id,
 			engine,
 			playingClientCount,
