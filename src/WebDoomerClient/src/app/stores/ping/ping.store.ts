@@ -17,14 +17,14 @@ import { appSettingsPingProtocolSchema } from '../appsettings/app-settings-schem
     providedIn: 'root',
 })
 export class PingStore extends ComponentStore<PingStoreState> {
-    private readonly _item$ = this.select((state) => state.item);
-    private readonly _loading$ = this.select((state) => state.loading);
-    private readonly _error$ = this.select((state) => state.error);
+    public readonly ping$ = this.select((state) => state.ping);
+    public readonly loading$ = this.select((state) => state.loading);
+    public readonly error$ = this.select((state) => state.error);
 
     public readonly vm$ = this.select({
-        item: this._item$,
-        loading: this._loading$,
-        error: this._error$,
+        ping: this.ping$,
+        loading: this.loading$,
+        error: this.error$,
     });
 
     public readonly getPing = this.effect((protocol$: Observable<z.infer<typeof appSettingsPingProtocolSchema>>) =>
@@ -59,7 +59,7 @@ export class PingStore extends ComponentStore<PingStoreState> {
 
     constructor(private readonly _pingApiService: PingApiService) {
         super({
-            item: null,
+            ping: null,
             loading: false,
             error: null,
         });
