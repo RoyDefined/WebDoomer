@@ -97,6 +97,9 @@ export class Server implements z.infer<typeof serverSchema> {
         this.mapName = data.mapName;
         this.maxClients = data.maxClients;
         this.maxPlayers = data.maxPlayers;
+        this.playingClientCount = data.playingClientCount;
+        this.spectatingClientCount = data.spectatingClientCount;
+        this.botCount = data.botCount;
         this.pwadCollection = data.pwadCollection;
         this.gameType = data.gameType;
         this.gameTypeInstagib = data.gameTypeInstagib;
