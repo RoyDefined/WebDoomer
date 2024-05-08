@@ -255,6 +255,7 @@ export class ServersComponent implements OnInit, AfterViewInit {
         this.searchEnabled = !this.searchEnabled;
         if (!this.searchEnabled) {
             this._searchInputChange.next('');
+            this.searchInput = '';
         }
     }
 
