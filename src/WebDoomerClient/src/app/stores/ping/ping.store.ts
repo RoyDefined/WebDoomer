@@ -43,8 +43,8 @@ export class PingStore extends ComponentStore<PingStoreState> {
         ),
     );
 
-    private readonly setItem = this.updater((state, item: number | null) => {
-        return { ...state, item };
+    private readonly setItem = this.updater((state, ping: number | null) => {
+        return { ...state, ping };
     });
     private readonly setLoading = this.updater((state, loading: boolean) => {
         return { ...state, loading };
