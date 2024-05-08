@@ -17,16 +17,16 @@ import { ListRange } from '@angular/cdk/collections';
 export class ServersStore extends ComponentStore<ServersStoreState> {
     private readonly sqidsConverter = new Sqids();
 
-    private readonly _servers$ = this.select((state) => state.items);
-    private readonly _loading$ = this.select((state) => state.loading);
-    private readonly _searchString$ = this.select((state) => state.searchString);
-    private readonly _error$ = this.select((state) => state.error);
+    public readonly servers$ = this.select((state) => state.items);
+    public readonly loading$ = this.select((state) => state.loading);
+    public readonly searchString$ = this.select((state) => state.searchString);
+    public readonly error$ = this.select((state) => state.error);
 
     public readonly vm$ = this.select({
-        servers: this._servers$,
-        loading: this._loading$,
-        searchString: this._searchString$,
-        error: this._error$,
+        servers: this.servers$,
+        loading: this.loading$,
+        searchString: this.searchString$,
+        error: this.error$,
     });
 
     public readonly getServerIdsWithSearchString = this.effect((searchString$: Observable<string>) =>
@@ -41,7 +41,7 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
     public readonly getServerIds = this.effect((trigger$) =>
         trigger$.pipe(
             tap(() => this.setLoading(true)),
-            withLatestFrom(this._searchString$),
+            withLatestFrom(this.searchString$),
             switchMap(([_, searchString]) => {
                 this.setServers([]);
 
@@ -64,7 +64,7 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
 
     public readonly updateListedServersByRange = this.effect((range$: Observable<ListRange>) =>
         range$.pipe(
-            withLatestFrom(this._servers$, this._searchString$),
+            withLatestFrom(this.servers$, this.searchString$),
             mergeMap(([range, servers, searchString]) => {
                 const take = range.end - range.start;
 
@@ -86,6 +86,8 @@ export class ServersStore extends ComponentStore<ServersStoreState> {
                                 continue;
                             }
 
+                            // This is possible when loading the server page with a predefined search query.
+                            // Rather than updating with new data, ignore any changes to avoid overlapping different states.
                             if (server.state !== 'id') {
                                 //console.warn(`Server state not 'id' for server with index ${i}.`);
                                 continue;

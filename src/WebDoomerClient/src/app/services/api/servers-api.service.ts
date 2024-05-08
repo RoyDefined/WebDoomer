@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { map, switchMap } from 'rxjs';
+import { map } from 'rxjs';
 import { serverListArraySchema } from './server-list-schema';
 import { serverIdListArraySchema } from './server-id-list-schema';
 import { Server } from '../../models/server';

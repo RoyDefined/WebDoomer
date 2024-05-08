@@ -1,11 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore, tapResponse } from '@ngrx/component-store';
-import { ServersApiService } from '../../services/api/servers-api.service';
-import { Server } from '../../models/server';
-import { EMPTY, Observable, catchError, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs';
+import { Observable, switchMap, tap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import Sqids from 'sqids';
-import { ListRange } from '@angular/cdk/collections';
 import { PingStoreState } from './ping-store-state';
 import { PingApiService } from '../../services/api/ping-api.service';
 import { z } from 'zod';
@@ -17,14 +13,14 @@ import { appSettingsPingProtocolSchema } from '../appsettings/app-settings-schem
     providedIn: 'root',
 })
 export class PingStore extends ComponentStore<PingStoreState> {
-    private readonly _item$ = this.select((state) => state.item);
-    private readonly _loading$ = this.select((state) => state.loading);
-    private readonly _error$ = this.select((state) => state.error);
+    public readonly ping$ = this.select((state) => state.ping);
+    public readonly loading$ = this.select((state) => state.loading);
+    public readonly error$ = this.select((state) => state.error);
 
     public readonly vm$ = this.select({
-        item: this._item$,
-        loading: this._loading$,
-        error: this._error$,
+        ping: this.ping$,
+        loading: this.loading$,
+        error: this.error$,
     });
 
     public readonly getPing = this.effect((protocol$: Observable<z.infer<typeof appSettingsPingProtocolSchema>>) =>
@@ -47,8 +43,8 @@ export class PingStore extends ComponentStore<PingStoreState> {
         ),
     );
 
-    private readonly setItem = this.updater((state, item: number | null) => {
-        return { ...state, item };
+    private readonly setItem = this.updater((state, ping: number | null) => {
+        return { ...state, ping };
     });
     private readonly setLoading = this.updater((state, loading: boolean) => {
         return { ...state, loading };
@@ -59,7 +55,7 @@ export class PingStore extends ComponentStore<PingStoreState> {
 
     constructor(private readonly _pingApiService: PingApiService) {
         super({
-            item: null,
+            ping: null,
             loading: false,
             error: null,
         });
