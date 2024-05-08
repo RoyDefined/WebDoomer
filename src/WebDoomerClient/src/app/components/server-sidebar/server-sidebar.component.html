@@ -4,6 +4,14 @@
 <div class="flex flex-col gap-2 text-nowrap px-1 pb-8">
     <h1 class="line-clamp-2 h-12 text-balance text-center font-bold">{{ server.name }}</h1>
 
+    <div class="flex flex-col gap-1">
+        <h2 class="line-clamp-2 text-balance text-center font-bold">Copy direct link to:</h2>
+        <div class="flex justify-center gap-3">
+            <button class="button highlight" copy-to-clipboard [content]="serverLink">This server</button>
+            <button class="button highlight" copy-to-clipboard [content]="clusterLink">Server cluster</button>
+        </div>
+    </div>
+
     @if (server.state !== 'detailed') {
         <div class="mt-10 flex flex-col gap-10">
             <div class="grow animate-pulse">

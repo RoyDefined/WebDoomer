@@ -16,7 +16,7 @@
 <app-header-left-content>
     @if (serverCount$ | async; as serverCount) {
         @if (serverCount) {
-            <div class="content-center">{{ serverCount }} servers</div>
+            <div class="content-center">{{ serverCount }} server{{ serverCount > 1 ? 's' : '' }}</div>
         }
     }
 </app-header-left-content>
@@ -33,9 +33,10 @@
 
 <app-header-bottom-content>
     @if (searchEnabled) {
-        <div class="ml-4 flex sm:ml-0 sm:justify-end">
+        <div class="ml-4 mt-2 flex gap-1 sm:ml-0 sm:mt-1 sm:justify-end">
             <div class="group relative z-0 w-full sm:w-auto">
                 <input
+                    [(ngModel)]="searchInput"
                     (input)="onSearchInputChange($event)"
                     id="search"
                     class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-1 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 sm:w-60"
@@ -48,6 +49,10 @@
                     Search
                 </label>
             </div>
+
+            @if (searchInput) {
+                <button class="button min-w-fit" copy-to-clipboard [content]="searchInputLink">Copy permalink</button>
+            }
         </div>
     }
 </app-header-bottom-content>

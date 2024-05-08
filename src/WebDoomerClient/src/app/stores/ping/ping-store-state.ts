@@ -1,5 +1,5 @@
 export interface PingStoreState {
-    item: number | null;
+    ping: number | null;
     loading: boolean;
     error: Error | null;
 }

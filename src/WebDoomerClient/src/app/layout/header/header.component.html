@@ -42,8 +42,8 @@
             </a>
 
             @if (vm$ | async; as vm) {
-                <div [tooltip]="vm.loading ? 'Loading...' : getPingMessage(vm.item)" placement="bottom">
-                    @if (getPingState(vm.item); as state) {
+                <div [tooltip]="vm.loading ? 'Loading...' : getPingMessage(vm.ping)" placement="bottom">
+                    @if (getPingState(vm.ping); as state) {
                         <span
                             class="mr-3 flex h-2 w-2 rounded-full"
                             [ngClass]="{

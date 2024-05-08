@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
 import { Server } from '../../models/server';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { CommonModule, DOCUMENT, NgOptimizedImage } from '@angular/common';
 import { z } from 'zod';
 import { clientSettingsSchema } from '../../stores/clientsettings/client-settings-schema';
 import { formatString } from '../../utils/stringUtils';
@@ -51,6 +51,16 @@ export class ServerSidebarComponent {
         y: '506CFC',
         z: '236773',
     };
+
+    public get serverLink() {
+        const base = this._document.location.origin + this._document.location.pathname + '?search=';
+        return base + this.server.ip + ':' + this.server.port;
+    }
+
+    public get clusterLink() {
+        const base = this._document.location.origin + this._document.location.pathname + '?search=';
+        return base + this.server.ip;
+    }
 
     private get baseEngineQuery() {
         const query: string[] = [];
@@ -161,7 +171,10 @@ export class ServerSidebarComponent {
         return isWindows();
     }
 
-    constructor(private readonly _sanitizer: DomSanitizer) {}
+    constructor(
+        private readonly _sanitizer: DomSanitizer,
+        @Inject(DOCUMENT) private readonly _document: Document,
+    ) {}
 
     public clickCollapse() {
         this.collapse.emit();

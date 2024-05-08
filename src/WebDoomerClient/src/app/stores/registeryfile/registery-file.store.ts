@@ -14,17 +14,17 @@ import { formatString } from '../../utils/stringUtils';
     providedIn: 'root',
 })
 export class RegisteryFileStore extends ComponentStore<RegisteryFileStoreState> {
-    private readonly _file$ = this.select((state) => state.parsedItem || state.baseItem);
-    private readonly _baseFile$ = this.select((state) => state.parsedItem || state.baseItem);
-    private readonly _loading$ = this.select((state) => state.loading);
-    private readonly _error$ = this.select((state) => state.error);
+    public readonly file$ = this.select((state) => state.parsedItem || state.baseItem);
+    public readonly baseFile$ = this.select((state) => state.parsedItem || state.baseItem);
+    public readonly loading$ = this.select((state) => state.loading);
+    public readonly error$ = this.select((state) => state.error);
 
     private readonly _registryFileFetch = this._http.get('assets/Doomseeker-Protocol.txt', { observe: 'response', responseType: 'text' });
 
     public readonly vm$ = this.select({
-        file: this._file$,
-        loading: this._loading$,
-        error: this._error$,
+        file: this.file$,
+        loading: this.loading$,
+        error: this.error$,
     });
 
     public readonly fetchRegistryFile = this.effect((trigger$) =>
@@ -59,7 +59,7 @@ export class RegisteryFileStore extends ComponentStore<RegisteryFileStoreState> 
 
     public readonly updateRegisteryFileContent = this.effect((trigger$) =>
         trigger$.pipe(
-            withLatestFrom(this._clientSettingsStore.settings$, this._baseFile$),
+            withLatestFrom(this._clientSettingsStore.settings$, this.baseFile$),
             map((args) => {
                 const settings = args[1];
                 let file = args[2];

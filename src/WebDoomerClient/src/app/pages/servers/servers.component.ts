@@ -1,22 +1,16 @@
-import { AfterContentInit, AfterViewChecked, AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
-import { ServersApiService } from '../../services/api/servers-api.service';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { ServersStore } from '../../stores/servers/servers.store';
 import { ListedServerComponent } from '../../components/listed-server/listed-server.component';
 import { Server } from '../../models/server';
-import { ListRange } from '@angular/cdk/collections';
 import { Subject, Subscription, debounceTime, distinctUntilChanged, map, tap, withLatestFrom } from 'rxjs';
 import { ListedServerSkeletonComponent } from '../../components/listed-server-skeleton/listed-server-skeleton.component';
 import { ServerSidebarComponent } from '../../components/server-sidebar/server-sidebar.component';
 import { ModalService } from '../../services/modal/modal.service';
-import { LearnMoreSchemeComponent } from '../../components/learn-more-scheme/learn-more-scheme.component';
-import { ConfigureSchemeComponent } from '../../components/configure-scheme/configure-scheme.component';
 import { ClientSettingsStore } from '../../stores/clientsettings/client-settings.store';
 import { isMobile } from '../../utils/isMobile';
 import { isWindows } from '../../utils/isWindows';
-import { z } from 'zod';
-import { clientSettingsSchema } from '../../stores/clientsettings/client-settings-schema';
 import { MediaQuerySize } from '../../utils/media-query-size';
 import { HeaderLeftComponent } from '../../services/header-ref/components/header-left.component';
 import { HeaderRightComponent } from '../../services/header-ref/components/header-right.component';
@@ -24,6 +18,9 @@ import { HeaderBottomComponent } from '../../services/header-ref/components/head
 import { ServerHubStore } from '../../stores/signalr/server-hub.store';
 import { PingStore } from '../../stores/ping/ping.store';
 import { AppSettingsStore } from '../../stores/appsettings/app-settings.store';
+import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { CopyToClipboardDirective } from '../../directives/copy-to-clipboard-directive';
 
 @Component({
     standalone: true,
@@ -33,6 +30,7 @@ import { AppSettingsStore } from '../../stores/appsettings/app-settings.store';
     },
     imports: [
         CommonModule,
+        FormsModule,
         ScrollingModule,
         ListedServerComponent,
         ListedServerSkeletonComponent,
@@ -40,6 +38,7 @@ import { AppSettingsStore } from '../../stores/appsettings/app-settings.store';
         HeaderLeftComponent,
         HeaderRightComponent,
         HeaderBottomComponent,
+        CopyToClipboardDirective,
     ],
     providers: [ModalService],
 })
@@ -82,6 +81,9 @@ export class ServersComponent implements OnInit, AfterViewInit {
     /** Indicates the search box is enabled. */
     public searchEnabled = false;
 
+    /** Represents the permalink string that is generated using the search input and copied to the user. */
+    public searchInputLink = '';
+
     /** The subject to handle search input changes */
     private _searchInputChange = new Subject<string | null>();
 
@@ -90,6 +92,19 @@ export class ServersComponent implements OnInit, AfterViewInit {
     /** Indicates at what media query size server rows are expected to be fully expanded. */
     public get expandListMediaQuerySize(): MediaQuerySize {
         return this.selectedServer ? 'xl' : 'md';
+    }
+
+    /** Represents the current search input. */
+    private _searchInput = '';
+
+    public get searchInput() {
+        return this._searchInput;
+    }
+
+    public set searchInput(searchInput: string) {
+        this._searchInput = searchInput;
+        const search = encodeURIComponent(searchInput);
+        this.searchInputLink = this._document.location.origin + this._document.location.pathname + '?search=' + search;
     }
 
     public get isMobile() {
@@ -110,13 +125,15 @@ export class ServersComponent implements OnInit, AfterViewInit {
         private readonly _clientSettingsStore: ClientSettingsStore,
         private readonly _serverHubStore: ServerHubStore,
         private readonly _pingStore: PingStore,
+        private readonly _activatedRoute: ActivatedRoute,
+        @Inject(DOCUMENT) private readonly _document: Document,
     ) {
         // Subscribe to search input changes and fetch the new id list based on the search query.
         this._searchInputChange
             .pipe(
-                debounceTime(400),
                 map((value) => value || ''),
                 distinctUntilChanged(),
+                debounceTime(400),
             )
             .subscribe((value) => {
                 this._serversStore.getServerIdsWithSearchString(value);
@@ -142,7 +159,26 @@ export class ServersComponent implements OnInit, AfterViewInit {
             this.onSubscriptionError(vm.error);
         });
 
-        this._serversStore.getServerIds();
+        // Handle incoming new servers.
+        this._serversStore.servers$.subscribe((servers) => {
+            // If a single server is returned and a search was issued, this server should be focused in the sidebar.
+            if (servers.length != 1) {
+                return;
+            }
+
+            const server = servers[0];
+
+            if (!this.searchInput) {
+                return;
+            }
+
+            if (this.selectedServer === server) {
+                return;
+            }
+
+            this.selectedServer = server;
+            this._serversStore.updateDetailedServer(server);
+        });
 
         // Handle signalR signal to refresh the server list.
         this._onRefreshServersSubscription = this._serverHubStore.onRefreshServers.subscribe(() => {
@@ -150,6 +186,18 @@ export class ServersComponent implements OnInit, AfterViewInit {
             this.selectedServer = null;
             this._serversStore.getServerIds();
             this._pingStore.getPing(this._appSettingsStore.settings.pingProtocol);
+        });
+
+        this._activatedRoute.queryParams.subscribe((params) => {
+            // Request contains a search query parameter. Fetch using a search instead.
+            const search = params['search'];
+            if (search) {
+                this.searchEnabled = true;
+                this.searchInput = search;
+                this._serversStore.getServerIdsWithSearchString(search);
+                return;
+            }
+            this._serversStore.getServerIds();
         });
     }
 
@@ -238,6 +286,7 @@ export class ServersComponent implements OnInit, AfterViewInit {
         this.searchEnabled = !this.searchEnabled;
         if (!this.searchEnabled) {
             this._searchInputChange.next('');
+            this.searchInput = '';
         }
     }
 

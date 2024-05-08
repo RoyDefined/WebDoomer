@@ -1,4 +1,5 @@
-﻿using Sqids;
+﻿using Microsoft.AspNetCore.Hosting.Server;
+using Sqids;
 using System.Collections.ObjectModel;
 using WebDoomer.Zandronum;
 
@@ -48,6 +49,7 @@ public sealed record DetailedServer(
 	bool? SecuritySettings,
 	ReadOnlyCollection<string>? DehackedNameCollection,
 	string? Country,
+	VoiceChatType? VoiceChatType,
 	string? GameModeName,
 	string? GameModeShortName)
 {
@@ -91,6 +93,7 @@ public sealed record DetailedServer(
 			result.SecuritySettings,
 			result.DehackedNameCollection,
 			result.Country,
+			result.VoiceChatType,
 			result.GameModeName,
 			result.GameModeShortName);
 	}

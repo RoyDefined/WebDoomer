@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { AppSettingsStore } from '../appsettings/app-settings.store';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { ServerHubStoreState } from './server-hub-store-state';
@@ -17,12 +16,12 @@ export class ServerHubStore extends ComponentStore<ServerHubStoreState> {
         return this._appSettingsStore.settings?.apiBaseUrl + '/ServerHub';
     }
 
-    private readonly _loading$ = this.select((state) => state.loading);
-    private readonly _error$ = this.select((state) => state.error);
+    public readonly loading$ = this.select((state) => state.loading);
+    public readonly error$ = this.select((state) => state.error);
 
     public readonly vm$ = this.select({
-        loading: this._loading$,
-        error: this._error$,
+        loading: this.loading$,
+        error: this.error$,
     });
 
     public readonly startConnection = this.effect((trigger$) =>
