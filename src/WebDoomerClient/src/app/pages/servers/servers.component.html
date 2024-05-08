@@ -33,8 +33,8 @@
 
 <app-header-bottom-content>
     @if (searchEnabled) {
-        <div class="ml-4 flex sm:ml-0 sm:justify-end">
-            <div class="group relative z-0 mt-2 w-full sm:mt-0 sm:w-auto">
+        <div class="ml-4 mt-2 flex gap-1 sm:ml-0 sm:mt-1 sm:justify-end">
+            <div class="group relative z-0 w-full sm:w-auto">
                 <input
                     [(ngModel)]="searchInput"
                     (input)="onSearchInputChange($event)"
@@ -49,6 +49,10 @@
                     Search
                 </label>
             </div>
+
+            @if (searchInput) {
+                <button class="button w-40" copy-to-clipboard [content]="searchInputLink">Copy permalink</button>
+            }
         </div>
     }
 </app-header-bottom-content>

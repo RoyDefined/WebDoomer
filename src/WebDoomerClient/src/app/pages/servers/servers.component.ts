@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { ServersStore } from '../../stores/servers/servers.store';
 import { ListedServerComponent } from '../../components/listed-server/listed-server.component';
 import { Server } from '../../models/server';
-import { Subject, Subscription, debounceTime, distinctUntilChanged, map, withLatestFrom } from 'rxjs';
+import { Subject, Subscription, debounceTime, distinctUntilChanged, map, tap, withLatestFrom } from 'rxjs';
 import { ListedServerSkeletonComponent } from '../../components/listed-server-skeleton/listed-server-skeleton.component';
 import { ServerSidebarComponent } from '../../components/server-sidebar/server-sidebar.component';
 import { ModalService } from '../../services/modal/modal.service';
@@ -20,6 +20,7 @@ import { PingStore } from '../../stores/ping/ping.store';
 import { AppSettingsStore } from '../../stores/appsettings/app-settings.store';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CopyToClipboardDirective } from '../../directives/copy-to-clipboard-directive';
 
 @Component({
     standalone: true,
@@ -37,6 +38,7 @@ import { FormsModule } from '@angular/forms';
         HeaderLeftComponent,
         HeaderRightComponent,
         HeaderBottomComponent,
+        CopyToClipboardDirective,
     ],
     providers: [ModalService],
 })
@@ -79,8 +81,8 @@ export class ServersComponent implements OnInit, AfterViewInit {
     /** Indicates the search box is enabled. */
     public searchEnabled = false;
 
-    /** Represents the current search input. */
-    public searchInput = '';
+    /** Represents the permalink string that is generated using the search input and copied to the user. */
+    public searchInputLink = '';
 
     /** The subject to handle search input changes */
     private _searchInputChange = new Subject<string | null>();
@@ -90,6 +92,19 @@ export class ServersComponent implements OnInit, AfterViewInit {
     /** Indicates at what media query size server rows are expected to be fully expanded. */
     public get expandListMediaQuerySize(): MediaQuerySize {
         return this.selectedServer ? 'xl' : 'md';
+    }
+
+    /** Represents the current search input. */
+    private _searchInput = '';
+
+    public get searchInput() {
+        return this._searchInput;
+    }
+
+    public set searchInput(searchInput: string) {
+        this._searchInput = searchInput;
+        const search = encodeURIComponent(searchInput);
+        this.searchInputLink = this._document.location.origin + this._document.location.pathname + '?search=' + search;
     }
 
     public get isMobile() {
@@ -111,13 +126,14 @@ export class ServersComponent implements OnInit, AfterViewInit {
         private readonly _serverHubStore: ServerHubStore,
         private readonly _pingStore: PingStore,
         private readonly _activatedRoute: ActivatedRoute,
+        @Inject(DOCUMENT) private readonly _document: Document,
     ) {
         // Subscribe to search input changes and fetch the new id list based on the search query.
         this._searchInputChange
             .pipe(
-                debounceTime(400),
                 map((value) => value || ''),
                 distinctUntilChanged(),
+                debounceTime(400),
             )
             .subscribe((value) => {
                 this._serversStore.getServerIdsWithSearchString(value);
