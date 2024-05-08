@@ -149,6 +149,27 @@ export class ServersComponent implements OnInit, AfterViewInit {
             this.onSubscriptionError(vm.error);
         });
 
+        // Handle incoming new servers.
+        this._serversStore.servers$.subscribe((servers) => {
+            // If a single server is returned and a search was issued, this server should be focused in the sidebar.
+            if (servers.length != 1) {
+                return;
+            }
+
+            const server = servers[0];
+
+            if (!this.searchInput) {
+                return;
+            }
+
+            if (this.selectedServer === server) {
+                return;
+            }
+
+            this.selectedServer = server;
+            this._serversStore.updateDetailedServer(server);
+        });
+
         // Handle signalR signal to refresh the server list.
         this._onRefreshServersSubscription = this._serverHubStore.onRefreshServers.subscribe(() => {
             console.log('Server list refresh triggered.');
