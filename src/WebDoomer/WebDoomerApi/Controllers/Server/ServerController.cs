@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using WebDoomerApi.Services;
 
 namespace WebDoomerApi.Controllers;
@@ -33,8 +35,27 @@ public class ServerController : ControllerBase
 	[HttpGet("ids")]
 	public IActionResult GetServerIds(OrderByType orderBy = OrderByType.PlayersDescending, string? search = null)
 	{
-		var result = this._serverDataProvider.GetServerIds(search, orderBy);
-		return base.Ok(result);
+		IEnumerable<string> results;
+		if (this.TryGetIPEndPoint(search, out var ipEndPoint))
+		{
+			var result = this._serverDataProvider.GetServerId(ipEndPoint);
+			if (result == null)
+			{
+				// TODO: Support NotFound.
+				return base.Ok(Array.Empty<string>());
+			}
+
+			results = [result];
+		}
+
+		else
+		{
+			results = this.TryGetIPAddress(search, out var ipAddress)
+				? this._serverDataProvider.GetServerIds(ipAddress, orderBy)
+				: this._serverDataProvider.GetServerIds(search, orderBy);
+		}
+
+		return base.Ok(results);
 	}
 
 	/// <summary>
@@ -48,8 +69,27 @@ public class ServerController : ControllerBase
 	[HttpGet("range")]
 	public IActionResult GetServersRange(OrderByType orderBy = OrderByType.PlayersDescending, int skip = 0, int take = int.MaxValue, string? search = null)
 	{
-		var result = this._serverDataProvider.GetServersRange(search, skip, take, orderBy);
-		var listedServers = result.Select(ListedServer.Create);
+		IEnumerable<ProvidedServer> results;
+		if (this.TryGetIPEndPoint(search, out var ipEndPoint))
+		{
+			var result = this._serverDataProvider.GetServersRange(ipEndPoint);
+			if (result == null)
+			{
+				// TODO: Support NotFound.
+				return base.Ok(Array.Empty<ProvidedServer>());
+			}
+
+			results = [result];
+		}
+
+		else
+		{
+			results = this.TryGetIPAddress(search, out var ipAddress)
+				? this._serverDataProvider.GetServersRange(ipAddress, skip, take, orderBy)
+				: this._serverDataProvider.GetServersRange(search, skip, take, orderBy);
+		}
+
+		var listedServers = results.Select(ListedServer.Create);
 		return base.Ok(listedServers);
 	}
 
@@ -68,5 +108,39 @@ public class ServerController : ControllerBase
 		}
 
 		return base.Ok(DetailedServer.Create(result));
+	}
+
+	private bool TryGetIPEndPoint(string? search, [NotNullWhen(true)] out IPEndPoint? ipEndPoint)
+	{
+		if (search == null)
+		{
+			ipEndPoint = null;
+			return false;
+		}
+
+		// It is possible the user supplied `zan://` with their search string when they copied the join button address.
+		if (search.StartsWith("zan://"))
+		{
+			search = search["zan://".Length..];
+		}
+
+		var parsed = IPEndPoint.TryParse(search, out ipEndPoint);
+		if (!parsed)
+		{
+			return false;
+		}
+
+		return ipEndPoint!.Port != default;
+	}
+
+	private bool TryGetIPAddress(string? search, [NotNullWhen(true)] out IPAddress? ipAddress)
+	{
+		if (search == null)
+		{
+			ipAddress = null;
+			return false;
+		}
+
+		return IPAddress.TryParse(search, out ipAddress);
 	}
 }
