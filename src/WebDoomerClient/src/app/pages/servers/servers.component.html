@@ -34,7 +34,7 @@
 <app-header-bottom-content>
     @if (searchEnabled) {
         <div class="ml-4 flex sm:ml-0 sm:justify-end">
-            <div class="group relative z-0 w-full sm:w-auto">
+            <div class="group relative z-0 mt-2 w-full sm:mt-0 sm:w-auto">
                 <input
                     [(ngModel)]="searchInput"
                     (input)="onSearchInputChange($event)"
