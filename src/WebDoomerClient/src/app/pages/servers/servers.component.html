@@ -16,7 +16,7 @@
 <app-header-left-content>
     @if (serverCount$ | async; as serverCount) {
         @if (serverCount) {
-            <div class="content-center">{{ serverCount }} servers</div>
+            <div class="content-center">{{ serverCount }} server{{ serverCount > 1 ? 's' : '' }}</div>
         }
     }
 </app-header-left-content>
