@@ -24,6 +24,8 @@ import { HeaderBottomComponent } from '../../services/header-ref/components/head
 import { ServerHubStore } from '../../stores/signalr/server-hub.store';
 import { PingStore } from '../../stores/ping/ping.store';
 import { AppSettingsStore } from '../../stores/appsettings/app-settings.store';
+import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     standalone: true,
@@ -33,6 +35,7 @@ import { AppSettingsStore } from '../../stores/appsettings/app-settings.store';
     },
     imports: [
         CommonModule,
+        FormsModule,
         ScrollingModule,
         ListedServerComponent,
         ListedServerSkeletonComponent,
@@ -82,6 +85,9 @@ export class ServersComponent implements OnInit, AfterViewInit {
     /** Indicates the search box is enabled. */
     public searchEnabled = false;
 
+    /** Represents the current search input. */
+    public searchInput = '';
+
     /** The subject to handle search input changes */
     private _searchInputChange = new Subject<string | null>();
 
@@ -110,6 +116,7 @@ export class ServersComponent implements OnInit, AfterViewInit {
         private readonly _clientSettingsStore: ClientSettingsStore,
         private readonly _serverHubStore: ServerHubStore,
         private readonly _pingStore: PingStore,
+        private readonly _activatedRoute: ActivatedRoute,
     ) {
         // Subscribe to search input changes and fetch the new id list based on the search query.
         this._searchInputChange
@@ -142,14 +149,24 @@ export class ServersComponent implements OnInit, AfterViewInit {
             this.onSubscriptionError(vm.error);
         });
 
-        this._serversStore.getServerIds();
-
         // Handle signalR signal to refresh the server list.
         this._onRefreshServersSubscription = this._serverHubStore.onRefreshServers.subscribe(() => {
             console.log('Server list refresh triggered.');
             this.selectedServer = null;
             this._serversStore.getServerIds();
             this._pingStore.getPing(this._appSettingsStore.settings.pingProtocol);
+        });
+
+        this._activatedRoute.queryParams.subscribe((params) => {
+            // Request contains a search query parameter. Fetch using a search instead.
+            const search = params['search'];
+            if (search) {
+                this.searchEnabled = true;
+                this.searchInput = search;
+                this._serversStore.getServerIdsWithSearchString(search);
+                return;
+            }
+            this._serversStore.getServerIds();
         });
     }
 
