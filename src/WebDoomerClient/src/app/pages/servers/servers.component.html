@@ -88,7 +88,8 @@
             }
         }
 
-        <cdk-virtual-scroll-viewport itemSize="40" class="grow">
+        <!-- `[&>.cdk-virtual-scroll-content-wrapper]:w-full` applies a restriction to the width of the child wrapper, which fixes the weird width issues that appear on small devices. -->
+        <cdk-virtual-scroll-viewport itemSize="40" class="grow [&>.cdk-virtual-scroll-content-wrapper]:w-full">
             @if (vm$ | async; as vm) {
                 @if (vm.loading || !vm.servers) {
                     <app-listed-server-skeleton *ngFor="let i of [].constructor(100)"></app-listed-server-skeleton>
