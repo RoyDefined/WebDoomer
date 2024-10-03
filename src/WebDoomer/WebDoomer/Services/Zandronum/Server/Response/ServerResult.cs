@@ -83,7 +83,9 @@ public sealed class ServerResult
 			{
 				Name = x,
 				Optional = builder.optionalPwadIndexes?.Contains((byte)i),
-				Hash = builder.pwadHashes?[i],
+
+				// The hash should exist if the array exists, but there has been instances of the array not actually containing the hash.
+				Hash = builder.pwadHashes?.ElementAtOrDefault(i),
 			});
 
 		var pwadCollection = pwadEnumerable != null ?
