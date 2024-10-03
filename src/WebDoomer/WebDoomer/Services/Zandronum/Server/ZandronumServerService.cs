@@ -170,7 +170,20 @@ internal class ZandronumServerService : IZandronumServerService, IDisposable
 			
 			var data = bufferData.Take(socketResult.ReceivedBytes).ToArray();
 			var remoteEndpoint = (IPEndPoint)socketResult.RemoteEndPoint;
-			var receivePacket = new HuffmanPacket(data);
+
+
+			// Decode Huffman packet.
+			// There have been instances of the packet not decoding properly.
+			HuffmanPacket receivePacket;
+			try
+			{
+				receivePacket = new HuffmanPacket(data);
+			}
+			catch (Exception ex)
+			{
+				this._logger.LogWarning(ex, "Failed to decode Huffman message.");
+				continue;
+			}
 
 			this._logger.LogDebug("Received data from {EndPoint}. Size: {RegularSize}. Encoded size: {EncodedSize}", remoteEndpoint, receivePacket.PacketSize, receivePacket.EncodedPacketSize);
 
