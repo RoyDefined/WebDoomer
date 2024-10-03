@@ -23,10 +23,30 @@ export const serverSchema = z
         playingClientCount: z.number().nonnegative().nullable().optional(),
         spectatingClientCount: z.number().nonnegative().nullable().optional(),
         botCount: z.number().nonnegative().nullable().optional(),
-        name: z.string().min(1).nullable().optional(),
-        url: z.string().min(1).nullable().optional(),
-        email: z.string().min(1).nullable().optional(),
-        mapName: z.string().min(1).nullable().optional(),
+        name: z
+            .string()
+            .min(1)
+            .nullable()
+            .optional()
+            .catch(() => null),
+        url: z
+            .string()
+            .min(1)
+            .nullable()
+            .optional()
+            .catch(() => null),
+        email: z
+            .string()
+            .min(1)
+            .nullable()
+            .optional()
+            .catch(() => null),
+        mapName: z
+            .string()
+            .min(1)
+            .nullable()
+            .optional()
+            .catch(() => null),
         maxClients: z.number().nonnegative().nullable().optional(),
         maxPlayers: z.number().nonnegative().nullable().optional(),
         pwadCollection: pwadSchema.array().nullable().optional(),
@@ -34,7 +54,12 @@ export const serverSchema = z
         gameTypeInstagib: z.boolean().nullable().optional(),
         gameTypeBuckshot: z.boolean().nullable().optional(),
         gameNameType: z.number().nonnegative().lte(gameNameArray.length).nullable().optional(),
-        iwad: z.string().min(1).nullable().optional(),
+        iwad: z
+            .string()
+            .min(1)
+            .nullable()
+            .optional()
+            .catch(() => null),
         forcePassword: z.boolean().nullable().optional(),
         forceJoinPassword: z.boolean().nullable().optional(),
         gameSkillType: z.number().nonnegative().lte(gameSkillArray.length).nullable().optional(),
@@ -54,9 +79,30 @@ export const serverSchema = z
         dmFlagCollection: dmFlagSchema.array().nullable().optional(),
         securitySettings: z.boolean().nullable().optional(),
         dehackedNameCollection: dehackedNameSchema.array().nullable().optional(),
-        country: z.string().min(1).nullable().optional(),
-        gameModeName: z.string().min(1).nullable().optional(),
-        gameModeShortName: z.string().min(1).nullable().optional(),
-        voiceChatType: z.number().nonnegative().lte(voiceChatArray.length).nullable().optional(),
+        country: z
+            .string()
+            .min(1)
+            .nullable()
+            .optional()
+            .catch(() => null),
+        gameModeName: z
+            .string()
+            .min(1)
+            .nullable()
+            .optional()
+            .catch(() => null),
+        gameModeShortName: z
+            .string()
+            .min(1)
+            .nullable()
+            .optional()
+            .catch(() => null),
+        voiceChatType: z
+            .number()
+            .nonnegative()
+            .lte(voiceChatArray.length)
+            .nullable()
+            .optional()
+            .catch(() => 0),
     })
     .strict();

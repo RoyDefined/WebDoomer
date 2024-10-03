@@ -21,10 +21,26 @@ export const serverDetailedSchema = z
         playingClientCount: z.number().nonnegative().nullable(),
         spectatingClientCount: z.number().nonnegative().nullable(),
         botCount: z.number().nonnegative().nullable(),
-        name: z.string().min(1).nullable(),
-        url: z.string().min(1).nullable(),
-        email: z.string().min(1).nullable(),
-        mapName: z.string().min(1).nullable(),
+        name: z
+            .string()
+            .min(1)
+            .nullable()
+            .catch(() => null),
+        url: z
+            .string()
+            .min(1)
+            .nullable()
+            .catch(() => null),
+        email: z
+            .string()
+            .min(1)
+            .nullable()
+            .catch(() => null),
+        mapName: z
+            .string()
+            .min(1)
+            .nullable()
+            .catch(() => null),
         maxClients: z.number().nonnegative().nullable(),
         maxPlayers: z.number().nonnegative().nullable(),
         pwadCollection: pwadSchema.array().nullable(),
@@ -32,7 +48,11 @@ export const serverDetailedSchema = z
         gameTypeInstagib: z.boolean().nullable(),
         gameTypeBuckshot: z.boolean().nullable(),
         gameNameType: z.number().nonnegative().lte(gameNameArray.length).nullable(),
-        iwad: z.string().min(1).nullable(),
+        iwad: z
+            .string()
+            .min(1)
+            .nullable()
+            .catch(() => null),
         forcePassword: z.boolean().nullable(),
         forceJoinPassword: z.boolean().nullable(),
         gameSkillType: z.number().nonnegative().lte(gameSkillArray.length).nullable(),
@@ -48,13 +68,35 @@ export const serverDetailedSchema = z
         playerDataCollection: playerSchema.array().nullable(),
         teamCount: z.number().nonnegative().nullable(),
         teamInfoCollection: teamSchema.array().nullable(),
-        testingServerName: z.string().min(1).nullable(),
+        testingServerName: z
+            .string()
+            .min(1)
+            .nullable()
+            .catch(() => null),
         dmFlagCollection: dmFlagSchema.array().nullable(),
         securitySettings: z.boolean().nullable(),
         dehackedNameCollection: dehackedNameSchema.array().nullable(),
-        country: z.string().min(1).nullable(),
-        voiceChatType: z.number().nonnegative().lte(voiceChatArray.length).nullable(),
-        gameModeName: z.string().min(1).nullable(),
-        gameModeShortName: z.string().min(1).nullable(),
+        country: z
+            .string()
+            .min(1)
+            .nullable()
+            .catch(() => null),
+        voiceChatType: z
+            .number()
+            .nonnegative()
+            .lte(voiceChatArray.length)
+            .nullable()
+            .catch(() => null),
+
+        gameModeName: z
+            .string()
+            .min(1)
+            .nullable()
+            .catch(() => null),
+        gameModeShortName: z
+            .string()
+            .min(1)
+            .nullable()
+            .catch(() => null),
     })
     .strict();
