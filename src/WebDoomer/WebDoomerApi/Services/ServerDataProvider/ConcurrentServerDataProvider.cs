@@ -86,7 +86,7 @@ internal sealed class ConcurrentServerDataProvider : IServerDataProvider, IDispo
 		this._expectedCount[engineType] = expectedCount;
 		this._writeToActual[engineType] = false;
 
-		this._logger.LogWarning("Start new data set for {EngineType}. Expected server count: {ExpectedCount}.", engineType, expectedCount);
+		this._logger.LogInformation("Start new data set for {EngineType}. Expected server count: {ExpectedCount}.", engineType, expectedCount);
 	}
 
 	/// <inheritdoc />
