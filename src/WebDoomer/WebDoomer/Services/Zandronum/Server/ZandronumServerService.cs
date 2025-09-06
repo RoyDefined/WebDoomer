@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Options;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebDoomer.Zandronum;
 
@@ -167,68 +168,24 @@ internal class ZandronumServerService : IZandronumServerService, IDisposable
 				this._logger.LogWarning("SocketException: {Message}", ex.Message);
 				continue;
 			}
-			
+
 			var data = bufferData.Take(socketResult.ReceivedBytes).ToArray();
 			var remoteEndpoint = (IPEndPoint)socketResult.RemoteEndPoint;
 
-
-			// Decode Huffman packet.
-			// There have been instances of the packet not decoding properly.
-			HuffmanPacket receivePacket;
+			ServerResult? serverResult = null;
 			try
 			{
-				receivePacket = new HuffmanPacket(data);
+				serverResult = this.BuildServerResult(stopwatch, pendingBuilders, data, remoteEndpoint);
 			}
 			catch (Exception ex)
 			{
-				this._logger.LogWarning(ex, "Failed to decode Huffman message.");
-				continue;
+				this._logger.LogWarning(ex, "Failed to build server result for incoming endpoint {Endpoint}.", remoteEndpoint);
 			}
 
-			this._logger.LogDebug("Received data from {EndPoint}. Size: {RegularSize}. Encoded size: {EncodedSize}", remoteEndpoint, receivePacket.PacketSize, receivePacket.EncodedPacketSize);
-
-			// Get pending builder.
-			// This should only ever error if data was returned from an unexpected endpoint.
-			if (!pendingBuilders.TryGetValue(remoteEndpoint, out var builder))
+			if (serverResult != null)
 			{
-				this._logger.LogWarning("Could not find builder for {EndPoint}.", remoteEndpoint);
-				continue;
+				yield return serverResult;
 			}
-
-			ServerResult serverResult;
-			try
-			{
-				// Continue fetching for the endpoint if more data is expected.
-				if (builder.Parse(receivePacket, stopwatch))
-				{
-					if (receivePacket.UnreadBytes > 0)
-					{
-						this._logger.LogWarning("Continued packet of {EndPoint} contains unreadable bytes.", remoteEndpoint);
-					}
-
-					continue;
-				}
-
-				if (receivePacket.UnreadBytes > 0)
-				{
-					this._logger.LogWarning("Final packet of {EndPoint} contains unreadable bytes.", remoteEndpoint);
-				}
-
-				serverResult = builder.Build(ServerResultState.Success);
-				_ = pendingBuilders.Remove(remoteEndpoint);
-			}
-			catch (Exception ex)
-			{
-				while (ex.InnerException != null)
-				{
-					ex = ex.InnerException;
-				}
-
-				this._logger.LogWarning("Failed to server data from {EndPoint}: {Exception}", remoteEndpoint, ex.Message);
-				serverResult = builder.Build(ServerResultState.Error);
-			}
-
-			yield return serverResult;
 		}
 
 		// Handle unfinished builders.
@@ -236,13 +193,87 @@ internal class ZandronumServerService : IZandronumServerService, IDisposable
 		{
 			foreach (var builder in pendingBuilders.Values)
 			{
-				yield return builder.Build(ServerResultState.TimeOut);
+				ServerResult? serverResult = null;
+				try
+				{
+					serverResult = builder.Build(ServerResultState.TimeOut);
+				}
+				catch (Exception ex)
+				{
+					this._logger.LogWarning(ex, "Failed to build server result for timed out endpoint {Endpoint}.", builder.endPoint);
+				}
+
+				if (serverResult != null)
+				{
+					yield return serverResult;
+				}
 			}
 
 			this._logger.LogWarning("Unfinished or timed out endpoints: {EndPointsJoined}", pendingBuilders.Select(x => x.Value.endPoint));
 		}
 
 		this._logger.LogDebug("Batch fetch finished after {StopwatchMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
+	}
+
+	private ServerResult? BuildServerResult(Stopwatch stopwatch, Dictionary<IPEndPoint, ServerResultBuilder> pendingBuilders, byte[] data, IPEndPoint remoteEndpoint)
+	{
+		// Decode Huffman packet.
+		// There have been instances of the packet not decoding properly.
+		HuffmanPacket receivePacket;
+		try
+		{
+			receivePacket = new HuffmanPacket(data);
+		}
+		catch (Exception ex)
+		{
+			this._logger.LogWarning(ex, "Failed to decode Huffman message.");
+			return null;
+		}
+
+		this._logger.LogDebug("Received data from {EndPoint}. Size: {RegularSize}. Encoded size: {EncodedSize}", remoteEndpoint, receivePacket.PacketSize, receivePacket.EncodedPacketSize);
+
+		// Get pending builder.
+		// This should only ever error if data was returned from an unexpected endpoint.
+		if (!pendingBuilders.TryGetValue(remoteEndpoint, out var builder))
+		{
+			this._logger.LogWarning("Could not find builder for {EndPoint}.", remoteEndpoint);
+			return null;
+		}
+
+		ServerResult serverResult;
+		try
+		{
+			// Continue fetching for the endpoint if more data is expected.
+			if (builder.Parse(receivePacket, stopwatch))
+			{
+				if (receivePacket.UnreadBytes > 0)
+				{
+					this._logger.LogWarning("Continued packet of {EndPoint} contains unreadable bytes.", remoteEndpoint);
+				}
+
+				return null;
+			}
+
+			if (receivePacket.UnreadBytes > 0)
+			{
+				this._logger.LogWarning("Final packet of {EndPoint} contains unreadable bytes.", remoteEndpoint);
+			}
+
+			serverResult = builder.Build(ServerResultState.Success);
+			_ = pendingBuilders.Remove(remoteEndpoint);
+		}
+		catch (Exception ex)
+		{
+			while (ex.InnerException != null)
+			{
+				ex = ex.InnerException;
+			}
+
+			this._logger.LogWarning("Failed to server data from {EndPoint}: {Exception}", remoteEndpoint, ex.Message);
+			serverResult = builder.Build(ServerResultState.Error);
+		}
+
+		return serverResult;
 	}
 
 	private void OptionsMonitorOnChangeListener(WebDoomerOptions options, string? _)
